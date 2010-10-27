@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>de.nierbeck.webconsole.plugins.jmx</groupId>
+	<artifactId>jmx-webconsole</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>bundle</packaging>
+	<name>JMX-Webconsole</name>
+	<description>A Webconsole for displaying JMX MBeans and attributes</description>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.6</source>
+					<target>1.6</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>2.0.1</version>
+				<extensions>true</extensions>
+				<configuration>
+					<instructions>
+						<Bundle-SymbolicName>
+							${project.artifactId}
+                        </Bundle-SymbolicName>
+						<Import-Package>
+							javax.management.*,
+							org.osgi.framework
+                        </Import-Package>
+						<DynamicImport-Package>
+							<!-- logging -->
+							org.osgi.service.log;version="[1.3,2)",
+
+							<!-- configuration -->
+							org.osgi.service.cm;version="[1.2,2)",
+							org.osgi.service.metatype;version="[1.1,2)",
+
+							<!-- plug into the web console -->
+							javax.servlet;
+							javax.servlet.http;version="[2.3,3)",
+							org.apache.felix.webconsole;version="[3.0,3.2)",
+
+							<!-- plug into the traditional Felix shell -->
+							org.apache.felix.shell;version="[1.0,1.1)"
+						</DynamicImport-Package>
+						<Private-Package>
+							de.nierbeck.webconsole.plugins.jmx.*
+                        </Private-Package>
+						<Bundle-Activator>
+							de.nierbeck.webconsole.plugins.jmx.internal.Activator
+                        </Bundle-Activator>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>4.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+			<version>4.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.shell</artifactId>
+			<version>1.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.webconsole</artifactId>
+			<version>3.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope>
+        </dependency>
+	</dependencies>
+</project>

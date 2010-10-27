@@ -1,0 +1,33 @@
+<script type="text/javascript" src="${pluginRoot}/res/ui/jmx.js"></script>
+<script type="text/javascript">
+var i18n = {
+	displayTimeline: '${displayTimeline}',
+	displayList    : '${displayList}'
+}
+</script>
+
+<!-- status line -->
+<p class="statline">&nbsp;</p>
+
+<!-- table caption -->
+<div class="ui-widget-header ui-corner-top buttonGroup">
+	<button id="reload">${reload}</button>
+</div>
+
+<!-- table -->
+<table id="mbeanTable" class="tablesorter nicetable">
+	<thead>
+		<tr>
+			<th class="col_Received">${domain}</th>
+			<th class="col_Topic">${attributes}</th>
+			<th class="col_Props">${operations}</th>
+		</tr>
+	</thead>
+	<tbody>
+		<tr>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+			<td>&nbsp;</td>
+		</tr>
+	</tbody>
+</table>
