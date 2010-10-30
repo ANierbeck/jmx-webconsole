@@ -3,3 +3,4 @@ The first Implementation was inspired by
 http://leentoelen.blogspot.com/2009/09/creating-simple-felix-webconsole-plugin.html
 
 A lot of code was learned from the event plugin for the webconsole.
+Other parts where adpoted from the bundel plugin

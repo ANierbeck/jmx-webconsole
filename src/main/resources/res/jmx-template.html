@@ -1,33 +1,62 @@
 <script type="text/javascript" src="${pluginRoot}/res/ui/jmx.js"></script>
+<link rel="stylesheet" href="http://dev.jquery.com/view/trunk/plugins/treeview/jquery.treeview.css" type="text/css" media="screen" />
+<script type="text/javascript" src="http://dev.jquery.com/view/trunk/plugins/treeview/jquery.treeview.js"></script>
 <script type="text/javascript">
+// <![CDATA[
+var drawDetails = ${drawDetails};
+var currentDomain = ${currentDomain};
+var lastMBeanData = ${__mbeans__};
 var i18n = {
 	displayTimeline: '${displayTimeline}',
 	displayList    : '${displayList}'
 }
+// ]]>
 </script>
 
 <!-- status line -->
 <p class="statline">&nbsp;</p>
 
-<!-- table caption -->
-<div class="ui-widget-header ui-corner-top buttonGroup">
-	<button id="reload">${reload}</button>
-</div>
+<!-- top header -->
+<form method="post" enctype="multipart/form-data" action="" class="filterForm">
+	<div class="ui-widget-header ui-corner-top buttonGroup">
+		<div class="filterBox">
+			<input  class="filter" value="" title="${mbeans.filter.help}" />
+			<span   class="filterClear ui-icon ui-icon-close" title="${mbeans.filter.clear}">&nbsp;</span>
+			<button class="filterApply" title="${bundles.filter.help}">${mbeans.filter.apply}</button>
+			<button class="filterLDAP"  title="${bundles.filter.ldap.tip}">${mbeans.filter.ldap}</button>
+		</div>
+		<button id="reload" class="reloadButton" type="button">${reload}</button>
+	</div>
+</form>
 
 <!-- table -->
 <table id="mbeanTable" class="tablesorter nicetable">
 	<thead>
 		<tr>
 			<th class="col_Received">${domain}</th>
-			<th class="col_Topic">${attributes}</th>
-			<th class="col_Props">${operations}</th>
+			<!-- th class="col_Actions">${mbeans.details}</th>
+			<th class="col_Actions">${mbeans.actions}</th -->
 		</tr>
 	</thead>
 	<tbody>
 		<tr>
-			<td>&nbsp;</td>
-			<td>&nbsp;</td>
-			<td>&nbsp;</td>
+			<td>&nbsp;</td> <!-- domain -->
+			<!-- details 
+			<td>
+				<div class="bIcon ui-icon ui-icon-triangle-1-e" title="Show Details">&nbsp;</div>
+				<div class="bName">&nbsp;</div> <!-- here goest bundle name/link -->
+			</td>
+			-->
+			<!-- actions 
+			<td>
+				<ul class="icons ui-widget">
+					<li class="dynhover" title="${start}"><span class="ui-icon ui-icon-play">&nbsp;</span></li>
+				</ul>
+			</td>
+			-->
 		</tr>
 	</tbody>
 </table>
+
+
+<div id="mbeanOpError" class="ui-helper-hidden" title="${mbean.error.title}"><pre>&nbsp;</pre></div>

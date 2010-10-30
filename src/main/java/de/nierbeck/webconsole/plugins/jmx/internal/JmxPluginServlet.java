@@ -17,11 +17,14 @@ import javax.management.MBeanAttributeInfo;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+
+import org.apache.felix.webconsole.internal.core.BundlesServlet;
 
 public class JmxPluginServlet extends HttpServlet {
 	private MBeanServer mBeanServer;
@@ -43,33 +46,14 @@ public class JmxPluginServlet extends HttpServlet {
 		return JmxPluginConstants.NAME;
 	}
 
-	/*
-	 * protected void getContent(final HttpServletRequest req, final
-	 * HttpServletResponse response) throws ServletException, IOException {
-	 * final PrintWriter pw = response.getWriter(); if (mBeanServer == null) {
-	 * mBeanServer = ManagementFactory.getPlatformMBeanServer(); } final String
-	 * appRoot = req.getContextPath() + req.getServletPath(); if (mBeanServer !=
-	 * null) { String pathInfo = req.getPathInfo(); pathInfo = pathInfo
-	 * .substring(JmxPluginConstants.LABEL.length() + 1); try { if (pathInfo ==
-	 * null || pathInfo.equals("") || pathInfo.equals("/")) { final HashMap
-	 * domains = getDomains(mBeanServer); final Set keyset = domains.keySet();
-	 * final Iterator iter = keyset.iterator(); while (iter.hasNext()) { final
-	 * String domain = (String) iter.next(); pw.println("<a href=\"" + appRoot +
-	 * "/" + JmxPluginConstants.LABEL + "/" + domain + "\"><h1>" + domain +
-	 * "</h1></a>"); final ArrayList objectNames = (ArrayList) domains
-	 * .get(domain); render(objectNames, pw); } } else { final HashMap domains =
-	 * getDomains(mBeanServer); final String domain = pathInfo.substring(1);
-	 * pw.println("<a href=\"" + appRoot + "/" + JmxPluginConstants.LABEL + "/"
-	 * + domain + "\"><h1>" + domain + "</h1></a>"); final ArrayList objectNames
-	 * = (ArrayList) domains .get(domain); render(objectNames, pw); } } catch
-	 * (final Exception e) { e.printStackTrace(); } } }
-	 */
-
-	public HashMap getDomains(final MBeanServer mBeanServer)
+	public HashMap getDomains(final MBeanServer mBeanServer, String mbeanDomain)
 			throws ReflectionException, InstanceNotFoundException,
-			IntrospectionException {
+			IntrospectionException, MalformedObjectNameException, NullPointerException {
 		final HashMap result = new HashMap();
-		final Set mbeans = mBeanServer.queryMBeans(null, null);
+		ObjectName queryObjectName = null;
+		if (mbeanDomain != null && !mbeanDomain.isEmpty())
+			queryObjectName = new ObjectName(mbeanDomain+":*");
+		final Set mbeans = mBeanServer.queryMBeans(queryObjectName, null);
 		final Iterator iter = mbeans.iterator();
 		while (iter.hasNext()) {
 			final ObjectInstance mbean = (ObjectInstance) iter.next();
@@ -137,7 +121,7 @@ public class JmxPluginServlet extends HttpServlet {
 		}
 		pw.write("]");
 		pw.write(',');
-		jsonKey(pw, "opperations");
+		jsonKey(pw, "operations");
 		pw.write("[");
 		final MBeanOperationInfo[] ops = mBeanInfo.getOperations();
 		for (int i = 0; i < ops.length; i++) {
@@ -150,18 +134,6 @@ public class JmxPluginServlet extends HttpServlet {
 		}
 		pw.write("]");
 	}
-
-	// public void activateBundle(final BundleContext bundleContext) {
-	// super.activate(bundleContext);
-	// mBeanServer = ManagementFactory.getPlatformMBeanServer();
-	// }
-	//
-	// public void deactivate() {
-	// super.deactivate();
-	// mBeanServer = null;
-	// }
-
-	// TODO: After this line the new stuff is added
 
 	private final String readTemplateFile(final Class clazz,
 			final String templateFile) {
@@ -210,49 +182,10 @@ public class JmxPluginServlet extends HttpServlet {
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding("utf-8");
 
-		renderJSON(resp.getWriter());
+		renderJSON(resp.getWriter(), null);
 	}
 
-	private void renderJSON(final PrintWriter pw) throws IOException {
-
-		/*
-		 * List events = this.collector.getEvents();
-		 * 
-		 * StringBuffer statusLine = new StringBuffer(); statusLine.append(
-		 * events.size() ); statusLine.append( " Event"); if ( events.size() !=
-		 * 1 ) { statusLine.append('s'); } statusLine.append( " received" ); if
-		 * ( !events.isEmpty() ) { statusLine.append( " since " ); Date d = new
-		 * Date(); d.setTime( ( ( EventInfo ) events.get( 0 ) ).received );
-		 * statusLine.append( d ); } statusLine.append( ". (Event admin: " ); if
-		 * ( !this.eventAdminAvailable ) { statusLine.append("un"); }
-		 * statusLine.append("available; Config admin: "); if (
-		 * !this.configAdminAvailable ) { statusLine.append("un"); }
-		 * statusLine.append("available)");
-		 * 
-		 * // Compute scale: startTime is 0, lastTimestamp is 100% final long
-		 * startTime = this.collector.getStartTime(); final long endTime =
-		 * (events.size() == 0 ? startTime :
-		 * ((EventInfo)events.get(events.size() - 1)).received); final float
-		 * scale = (endTime == startTime ? 100.0f : 100.0f / (endTime -
-		 * startTime));
-		 * 
-		 * pw.write("{");
-		 * 
-		 * jsonKey( pw, "status" ); jsonValue( pw, statusLine.toString() );
-		 * pw.write(','); jsonKey( pw, "data" );
-		 * 
-		 * pw.write('[');
-		 * 
-		 * // display list in reverse order for ( int index = events.size() - 1;
-		 * index >= 0; index-- ) { eventJson( pw, ( EventInfo ) events.get(
-		 * index ), index, startTime, scale ); if ( index > 0 ) { pw.write(',');
-		 * } }
-		 * 
-		 * pw.write(']');
-		 * 
-		 * pw.write("}");
-		 */
-
+	private void renderJSON(final PrintWriter pw, String mbeanDomain) throws IOException {
 		if (mBeanServer == null) {
 			mBeanServer = ManagementFactory.getPlatformMBeanServer();
 		}
@@ -261,7 +194,7 @@ public class JmxPluginServlet extends HttpServlet {
 
 		if (mBeanServer != null) {
 			try {
-				final HashMap domains = getDomains(mBeanServer);
+				final HashMap domains = getDomains(mBeanServer, mbeanDomain);
 				final Set keyset = domains.keySet();
 				statusLine.append(keyset.size());
 				statusLine.append(" MBean");
@@ -289,13 +222,6 @@ public class JmxPluginServlet extends HttpServlet {
 					if (iter.hasNext())
 						pw.write(',');
 
-					/*
-					 * pw.println("<a href=\"" + appRoot + "/" +
-					 * JmxPluginConstants.LABEL + "/" + domain + "\"><h1>" +
-					 * domain + "</h1></a>"); final ArrayList objectNames =
-					 * (ArrayList) domains .get(domain); render(objectNames,
-					 * pw);
-					 */
 				}
 				pw.write(']');
 			} catch (final Exception e) {
@@ -308,14 +234,25 @@ public class JmxPluginServlet extends HttpServlet {
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-		final String info = request.getPathInfo();
+		String info = request.getPathInfo();
 		if (info.endsWith(".json")) {
 			response.setContentType("application/json");
 			response.setCharacterEncoding("UTF-8");
+			
+			// remove .json
+			info = info.substring(0, info.length() - 5);
+            // remove label and starting slash
+            info = info.substring(getLabel().length() + 1);
+			// we only accept direct requests to a bundle if they have a slash after the label
+            String mbeanDomain = null;
+            if (info.startsWith("/") )
+            {
+                mbeanDomain = info.substring(1);
+            }
 
-			PrintWriter pw = response.getWriter();
-			this.renderJSON(pw);
-
+            PrintWriter pw = response.getWriter();
+            this.renderJSON(pw, mbeanDomain);
+            
 			// nothing more to do
 			return;
 		}

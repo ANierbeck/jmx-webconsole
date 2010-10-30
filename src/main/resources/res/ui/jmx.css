@@ -14,14 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#timeline          { width: 100%; overflow-x: scroll }
-#timelineLegend .event { display: inline-block; width: 12em; margin: .2em 0; text-align: center }
-.event                 { overflow:visible; white-space:nowrap }
-.eventservice { background-color: #ADFF2F }
-.eventbundle   { background-color: #FFCACD }
-.eventconfig   { background-color: #FFD700 }
-.eventframework { background-color: #DCDCDC }
 
 table.propTable, table.propTable tr, table.propTable td { border: none !important }
 td.propName { padding: 0 4px 0 0; text-align: right !important; text-decoration: underline }
 td.propVal   { padding: 0 0 0 4px }
+
+.filterBox      { float: left; margin-left: 1em }
+.symName                 { font-style: italic }
+.symName:before { content: " (" }
+.symName:after   { content: ")"  }
+.filterClear        { display: inline-block; vertical-align: middle }
+.bIcon, .bName   { display: inline-block }
+.bIcon { float: left }
