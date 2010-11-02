@@ -1,6 +1,6 @@
 <script type="text/javascript" src="${pluginRoot}/res/ui/jmx.js"></script>
-<link rel="stylesheet" href="http://dev.jquery.com/view/trunk/plugins/treeview/jquery.treeview.css" type="text/css" media="screen" />
-<script type="text/javascript" src="http://dev.jquery.com/view/trunk/plugins/treeview/jquery.treeview.js"></script>
+<link rel="stylesheet" href="${pluginRoot}/res/ui/treeview/jquery.treeview.css" type="text/css" media="screen" />
+<script type="text/javascript" src="${pluginRoot}/res/ui/treeview/jquery.treeview.js"></script>
 <script type="text/javascript">
 // <![CDATA[
 var drawDetails = ${drawDetails};
@@ -33,20 +33,23 @@ var i18n = {
 <table id="mbeanTable" class="tablesorter nicetable">
 	<thead>
 		<tr>
-			<th class="col_Received">${domain}</th>
+			<th class="col_domainTree">${domain}</th>
+			<th class="col_domainDetail">${details}</th>
 			<!-- th class="col_Actions">${mbeans.details}</th>
 			<th class="col_Actions">${mbeans.actions}</th -->
 		</tr>
 	</thead>
 	<tbody>
 		<tr>
-			<td>&nbsp;</td> <!-- domain -->
+			<td>
+				<ul id="domainTree" class="treeview"></ul>
+			</td> <!-- domain -->
+			<td>&nbsp;</td> <!-- details -->
 			<!-- details 
 			<td>
 				<div class="bIcon ui-icon ui-icon-triangle-1-e" title="Show Details">&nbsp;</div>
-				<div class="bName">&nbsp;</div> <!-- here goest bundle name/link -->
-			</td>
-			-->
+				<div class="bName">&nbsp;</div> 
+			</td>-->
 			<!-- actions 
 			<td>
 				<ul class="icons ui-widget">

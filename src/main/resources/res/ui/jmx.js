@@ -21,11 +21,24 @@ function renderData( eventData, filter )  {
 
 	// append table view
 	mbeanBody.empty();
+	
+	domainDetailsRow = mbeansTemplate.clone();
+	var td = domainDetailsRow.find('td:eq(0)');
+//	$('<ul id=\'domainTree\'>').appendTo(td);
+	var domainTree = td.find('ul');
     for ( var idx in eventData.data ) {
     	if ( currentDomain == null || !drawDetails || currentDomain == eventData.data[idx].domain) {
-            entry( eventData.data[idx], filter );
+            entry( eventData.data[idx], filter, domainTree );
         }
     }
+
+    domainDetailsRow.appendTo(mbeanBody);
+	
+	$("#domainTree").treeview({
+		animated: "fast",
+		collapsed: true,
+		unique: true
+	});
     
     if ( drawDetails && eventData.data.length == 1 ) {
 		$('.filterBox input, .filterBox button').addClass('ui-state-disabled');
@@ -37,22 +50,22 @@ function renderData( eventData, filter )  {
     }
     initStaticWidgets();
     
-	mbeanTable.trigger('update').trigger('applyWidgets');
+    mbeansTemplate.trigger('update').trigger('applyWidgets');
 }
 
 
-function entry( /* Object */ mbean, filter ) {
+function entry( /* Object */ mbean, filter, domainTree ) {
 	var matches = !(filter && typeof filter.test == 'function') ? true : filter.test(dataEntry.domain);
 
-	if (matches) entryInternal( mbean ) //.appendTo(mbeanBody);
+	if (matches) entryInternal( mbean, domainTree ) //.appendTo(mbeanBody);
+	
 }
 
-function entryInternal( /* Object */ mbean ) {
+
+function entryInternal( /* Object */ mbean, domainTree ) {
     var domain = mbean.domain;
 
 	/*
-	var tr = mbeansTemplate.clone();
-
 	tr.attr('id', 'entry'+domain);
 	tr.find('td:eq(0)').text(domain);
 	tr.find('.bIcon').attr('id', 'img'+domain).click(function() {showDetails(domain)});
@@ -60,16 +73,18 @@ function entryInternal( /* Object */ mbean ) {
 	return tr;
 	*/
 	
-	var branches = $("<li><span class='folder'>"+domain+"</span><ul class='treeview'>" + 
+	$("<li class='expandable'><div class='hitarea expandable-hitarea'></div><span class='folder'><strong>"+domain+"</strong></span><ul class='treeview'>" + 
  		drawAttributes(mbean.attributes) +
  		drawOperations(mbean.operations) +
- 		"</ul></li>").appendTo(mbeanBody);
+ 		"</ul></li>").appendTo(domainTree);
  		
- 	$(mbeanBody).treeview({
- 		collapsed: true,
- 		add: branches
- 	});
+// 	$(td).treeview({
+// 		collapsed: true,
+// 		control: "#container",
+// 		add: branches
+// 	});
 	
+ 	
 }
 
 function drawAttributes(attributes) {
@@ -262,10 +277,9 @@ $(document).ready(function(){
 	
 	mbeanBody  = mbeanTable.find('tbody');
 	mbeansTemplate = mbeanBody.find('tr').clone();
+//	domainColumn = mbeansTemplate.find('td:eq(0)').clone();
+
 	
-	$(mbeanBody).treeview();
-	
-	
-	renderData(lastMBeanData);	
+	renderData(lastMBeanData);
 });
 
