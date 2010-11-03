@@ -81,7 +81,9 @@ public class JmxPluginServlet extends HttpServlet {
 			pw.write("{");
 			jsonKey(pw, "domain");
 			jsonValue(pw, domain);
-			
+			pw.write(',');
+			jsonKey(pw, "mbeans");
+			pw.write("[");
 
 			final Iterator iter = objectNames.iterator();
 			while (iter.hasNext()) {
@@ -91,7 +93,7 @@ public class JmxPluginServlet extends HttpServlet {
 				renderJsonDomain(pw, objectName, mBeanInfo);
 			}
 			
-			pw.write("}");
+			pw.write("]}");
 		}
 	}
 
@@ -106,6 +108,12 @@ public class JmxPluginServlet extends HttpServlet {
 
 	private void renderJsonDomain(final PrintWriter pw,
 			final ObjectName objectName, final MBeanInfo mBeanInfo) throws IOException {
+		pw.write("{");
+		jsonKey(pw, "mbean");
+		String canonicalName = objectName.getCanonicalName();
+		String[] split = canonicalName.split(":");
+		jsonValue(pw, split[1]);
+		
 		pw.write(',');
 		jsonKey(pw, "attributes");
 		pw.write("[");
@@ -133,6 +141,7 @@ public class JmxPluginServlet extends HttpServlet {
 			}
 		}
 		pw.write("]");
+		pw.write("},");
 	}
 
 	private final String readTemplateFile(final Class clazz,
@@ -197,7 +206,7 @@ public class JmxPluginServlet extends HttpServlet {
 				final HashMap domains = getDomains(mBeanServer, mbeanDomain);
 				final Set keyset = domains.keySet();
 				statusLine.append(keyset.size());
-				statusLine.append(" MBean");
+				statusLine.append(" Domain");
 				if (keyset.size() > 1) {
 					statusLine.append('s');
 				}

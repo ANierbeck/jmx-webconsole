@@ -57,34 +57,46 @@ function renderData( eventData, filter )  {
 function entry( /* Object */ mbean, filter, domainTree ) {
 	var matches = !(filter && typeof filter.test == 'function') ? true : filter.test(dataEntry.domain);
 
-	if (matches) entryInternal( mbean, domainTree ) //.appendTo(mbeanBody);
+	if (matches) entryInternal( mbean, domainTree );
 	
 }
 
 
 function entryInternal( /* Object */ mbean, domainTree ) {
     var domain = mbean.domain;
-
-	/*
-	tr.attr('id', 'entry'+domain);
-	tr.find('td:eq(0)').text(domain);
-	tr.find('.bIcon').attr('id', 'img'+domain).click(function() {showDetails(domain)});
-	tr.find('.bName').html( drawDetails ? name : '<a href="' + pluginRoot + '/' + domain + '">' + domain + '</a>' );
-	return tr;
-	*/
 	
 	$("<li class='expandable'><div class='hitarea expandable-hitarea'></div><span class='folder'><strong>"+domain+"</strong></span><ul class='treeview'>" + 
- 		drawAttributes(mbean.attributes) +
- 		drawOperations(mbean.operations) +
+		drawMBeans(mbean.mbeans) +
  		"</ul></li>").appendTo(domainTree);
- 		
-// 	$(td).treeview({
-// 		collapsed: true,
-// 		control: "#container",
-// 		add: branches
-// 	});
+
+}
+
+function drawMBeans(mbeans) {
+	var mbeansList = "";
 	
- 	
+	if (mbeans.length > 0) {
+		for (var idx in mbeans) {
+			mbean = mbeans[idx].mbean;
+			subBeans = mbean.split(",");
+			mbeansList += drawSubBeans(subBeans);
+			mbeansList += drawAttributes(mbeans[idx].attributes);
+		 	mbeansList += drawOperations(mbeans[idx].operations);
+		 	for (var count in subBeans)
+		 		mbeansList += "</ul></li>";
+		}
+	}
+	return mbeansList;
+}
+
+function drawSubBeans(mbeans) {
+	var subBeans = "";
+	
+	for (var idx in mbeans) {
+		beans = mbeans[idx].split("=");
+		subBeans += "<li class='expandable'><div class='hitarea expandable-hitarea'></div><span><strong class='"+beans[0]+"'>"+beans[1]+"</strong></span><ul>";
+	}
+	
+	return subBeans;
 }
 
 function drawAttributes(attributes) {
@@ -95,7 +107,7 @@ function drawAttributes(attributes) {
 		for ( var idx in attributes ) {
 			attributeList += "<li><span class='file'>"+attributes[idx]+"</span></li>";
 		}
-		attributeList += "</ul></li>"
+		attributeList += "</ul></li>";
 	}
 	
 	return attributeList;
