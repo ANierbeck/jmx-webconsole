@@ -121,8 +121,11 @@ public class JmxPluginServlet extends HttpServlet {
 		final MBeanAttributeInfo[] attrs = mBeanInfo.getAttributes();
 		for (int i = 0; i < attrs.length; i++) {
 			final MBeanAttributeInfo attr = attrs[i];
-			jsonValue(pw, attr.getDescription() + ": " + attr.getName() + " - "
-					+ attr.getType());
+//			jsonValue(pw, attr.getDescription() + ": " + attr.getName() + " - "
+//					+ attr.getType());
+			if (!attr.isReadable())
+				continue; //skip non readable properties
+			jsonValue(pw, attr.getName() + ":writable=" + attr.isWritable());
 			if (i < attrs.length) {
 				pw.write(',');
 			}
@@ -134,8 +137,9 @@ public class JmxPluginServlet extends HttpServlet {
 		final MBeanOperationInfo[] ops = mBeanInfo.getOperations();
 		for (int i = 0; i < ops.length; i++) {
 			final MBeanOperationInfo op = ops[i];
-			jsonValue(pw, op.getDescription() + ": " + op.getName() + " - "
-					+ op.getReturnType());
+//			jsonValue(pw, op.getDescription() + ": " + op.getName() + " - "
+//					+ op.getReturnType());
+			jsonValue(pw, op.getName());
 			if (i < ops.length) {
 				pw.write(',');
 			}

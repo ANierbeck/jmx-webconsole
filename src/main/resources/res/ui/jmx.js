@@ -24,7 +24,6 @@ function renderData( eventData, filter )  {
 	
 	domainDetailsRow = mbeansTemplate.clone();
 	var td = domainDetailsRow.find('td:eq(0)');
-//	$('<ul id=\'domainTree\'>').appendTo(td);
 	var domainTree = td.find('ul');
     for ( var idx in eventData.data ) {
     	if ( currentDomain == null || !drawDetails || currentDomain == eventData.data[idx].domain) {
@@ -106,7 +105,12 @@ function drawAttributes(attributes) {
 	if (attributes.length > 0) {
 		attributeList = "<li><span class='folder'><strong>Attributes</strong></span><ul>";
 		for ( var idx in attributes ) {
-			attributeList += "<li><span class='file'>"+attributes[idx]+"</span></li>";
+			attributeProps = attributes[idx].split(":");
+			isWritable = String(attributeProps[1].split("=")[1]);
+			if ("true"==isWritable)
+				attributeList += "<li><span class='file'>"+attributeProps[0]+"</span></li>";
+			else
+				attributeList += "<li><span class='file-readonly'>"+attributeProps[0]+"</span></li>";
 		}
 		attributeList += "</ul></li>";
 	}
