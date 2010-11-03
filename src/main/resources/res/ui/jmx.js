@@ -93,7 +93,7 @@ function drawSubBeans(mbeans) {
 	for (var idx in mbeans) {
 		beans = mbeans[idx].split("=");
 		/*class='"+beans[0]+"' should be an own class*/
-		subBeans += "<li><span class='folder'><strong>"+beans[1]+"</strong></span><ul>";
+		subBeans += "<li><span class='"+beans[0]+"'><strong>"+beans[1]+"</strong></span><ul>";
 	}
 	
 	return subBeans;
@@ -103,7 +103,7 @@ function drawAttributes(attributes) {
 	var attributeList = "";
 	
 	if (attributes.length > 0) {
-		attributeList = "<li><span class='folder'><strong>Attributes</strong></span><ul>";
+		attributeList = "<li><span class='attribute'><strong>Attributes</strong></span><ul>";
 		for ( var idx in attributes ) {
 			attributeProps = attributes[idx].split(":");
 			isWritable = String(attributeProps[1].split("=")[1]);
@@ -122,9 +122,9 @@ function drawOperations(operations) {
 	var operationsList = "";
 	
 	if (operations.length > 0) {
-		operationsList = "<li><span class='folder'><strong>Operations</strong></span><ul>";
+		operationsList = "<li><span class='operations'><strong>Operations</strong></span><ul>";
 		for (var idx in operations) {
-			operationsList += "<li><span class='file'>"+operations[idx]+"</span></li>";
+			operationsList += "<li><span class='operation'>"+operations[idx]+"</span></li>";
 		}
 		operationsList += "</ul></li>";
 	}	
