@@ -42,7 +42,7 @@ var i18n = {
 	<tbody>
 		<tr>
 			<td>
-				<ul id="domainTree" class="treeview"></ul>
+				<ul id="domainTree" class="filetree"></ul>
 			</td> <!-- domain -->
 			<td>&nbsp;</td> <!-- details -->
 			<!-- details 
@@ -61,5 +61,20 @@ var i18n = {
 	</tbody>
 </table>
 
+<!-- bottom header -->
+<form method="post" enctype="multipart/form-data" action="" class="filterForm">
+	<div class="ui-widget-header ui-corner-bottom buttonGroup">
+		<div class="filterBox">
+			<input  class="filter" value="" title="${mbeans.filter.help}" />
+			<span   class="filterClear ui-icon ui-icon-close" title="${mbeans.filter.clear}">&nbsp;</span>
+			<button class="filterApply" title="${bundles.filter.help}">${mbeans.filter.apply}</button>
+			<button class="filterLDAP"  title="${bundles.filter.ldap.tip}">${mbeans.filter.ldap}</button>
+		</div>
+		<button id="reload" class="reloadButton" type="button">${reload}</button>
+	</div>
+</form>
+
+<!-- status line -->
+<p class="statline">&nbsp;</p>
 
 <div id="mbeanOpError" class="ui-helper-hidden" title="${mbean.error.title}"><pre>&nbsp;</pre></div>

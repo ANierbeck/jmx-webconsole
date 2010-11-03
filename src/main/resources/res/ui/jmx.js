@@ -65,7 +65,7 @@ function entry( /* Object */ mbean, filter, domainTree ) {
 function entryInternal( /* Object */ mbean, domainTree ) {
     var domain = mbean.domain;
 	
-	$("<li class='expandable'><div class='hitarea expandable-hitarea'></div><span class='folder'><strong>"+domain+"</strong></span><ul class='treeview'>" + 
+	$("<li><span class='folder'><strong>"+domain+"</strong></span><ul>" + 
 		drawMBeans(mbean.mbeans) +
  		"</ul></li>").appendTo(domainTree);
 
@@ -93,7 +93,8 @@ function drawSubBeans(mbeans) {
 	
 	for (var idx in mbeans) {
 		beans = mbeans[idx].split("=");
-		subBeans += "<li class='expandable'><div class='hitarea expandable-hitarea'></div><span><strong class='"+beans[0]+"'>"+beans[1]+"</strong></span><ul>";
+		/*class='"+beans[0]+"' should be an own class*/
+		subBeans += "<li><span class='folder'><strong>"+beans[1]+"</strong></span><ul>";
 	}
 	
 	return subBeans;
@@ -103,7 +104,7 @@ function drawAttributes(attributes) {
 	var attributeList = "";
 	
 	if (attributes.length > 0) {
-		attributeList = "<li class='expandable'><div class='hitarea expandable-hitarea'></div><span><strong>Attributes</strong></span><ul>";
+		attributeList = "<li><span class='folder'><strong>Attributes</strong></span><ul>";
 		for ( var idx in attributes ) {
 			attributeList += "<li><span class='file'>"+attributes[idx]+"</span></li>";
 		}
@@ -117,7 +118,7 @@ function drawOperations(operations) {
 	var operationsList = "";
 	
 	if (operations.length > 0) {
-		operationsList = "<li class='expandable'><div class='hitarea expandable-hitarea'></div><span><strong>Operations</strong></span><ul>";
+		operationsList = "<li><span class='folder'><strong>Operations</strong></span><ul>";
 		for (var idx in operations) {
 			operationsList += "<li><span class='file'>"+operations[idx]+"</span></li>";
 		}
@@ -238,7 +239,6 @@ function renderDetails( data ) {
 
 
 $(document).ready(function(){
-	//$('.reloadButton').click(loadData);
 	$('#reload').click(function() {
 		$.get(pluginRoot + '/.json', null, renderData, 'json');
 	}).click();
@@ -289,8 +289,6 @@ $(document).ready(function(){
 	
 	mbeanBody  = mbeanTable.find('tbody');
 	mbeansTemplate = mbeanBody.find('tr').clone();
-//	domainColumn = mbeansTemplate.find('td:eq(0)').clone();
-
 	
 	renderData(lastMBeanData);
 });
