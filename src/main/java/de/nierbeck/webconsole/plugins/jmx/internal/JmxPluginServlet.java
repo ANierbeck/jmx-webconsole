@@ -7,9 +7,12 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
@@ -110,7 +113,8 @@ public class JmxPluginServlet extends HttpServlet {
 			final ObjectName objectName, final MBeanInfo mBeanInfo) throws IOException {
 		pw.write("{");
 		jsonKey(pw, "mbean");
-		String canonicalName = objectName.getCanonicalName();
+		//using toString to make shure that type is set before any other property
+		String canonicalName = objectName.toString(); 
 		String[] split = canonicalName.split(":");
 		jsonValue(pw, split[1]);
 		
@@ -121,8 +125,6 @@ public class JmxPluginServlet extends HttpServlet {
 		final MBeanAttributeInfo[] attrs = mBeanInfo.getAttributes();
 		for (int i = 0; i < attrs.length; i++) {
 			final MBeanAttributeInfo attr = attrs[i];
-//			jsonValue(pw, attr.getDescription() + ": " + attr.getName() + " - "
-//					+ attr.getType());
 			if (!attr.isReadable())
 				continue; //skip non readable properties
 			jsonValue(pw, attr.getName() + ":writable=" + attr.isWritable());
@@ -208,7 +210,7 @@ public class JmxPluginServlet extends HttpServlet {
 		if (mBeanServer != null) {
 			try {
 				final HashMap domains = getDomains(mBeanServer, mbeanDomain);
-				final Set keyset = domains.keySet();
+				final Set keyset = new TreeSet(domains.keySet());
 				statusLine.append(keyset.size());
 				statusLine.append(" Domain");
 				if (keyset.size() > 1) {
@@ -229,6 +231,8 @@ public class JmxPluginServlet extends HttpServlet {
 
 					final ArrayList objectNames = (ArrayList) domains
 							.get(domain);
+					
+					Collections.sort(objectNames);
 
 					renderJsonDomain(pw, domain, objectNames);
 

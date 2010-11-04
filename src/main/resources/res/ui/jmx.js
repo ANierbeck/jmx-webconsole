@@ -73,30 +73,45 @@ function entryInternal( /* Object */ mbean, domainTree ) {
 function drawMBeans(mbeans) {
 	var mbeansList = "";
 	
+	var subStructure = {};
+	
 	if (mbeans.length > 0) {
-		for (var idx in mbeans) {
-			mbean = mbeans[idx].mbean;
-			subBeans = mbean.split(",");
-			mbeansList += drawSubBeans(subBeans);
-			mbeansList += drawAttributes(mbeans[idx].attributes);
-		 	mbeansList += drawOperations(mbeans[idx].operations);
-		 	for (var count in subBeans)
-		 		mbeansList += "</ul></li>";
-		}
+		//first build up the sub tree structure
+		$.each(mbeans, function(index, bean){
+			mbean = bean.mbean;
+			subBeans = mbean.split(",");			
+			if (subStructure[subBeans[0]] == undefined){
+				subStructure[subBeans[0]] = []
+			} 
+			subStructure[subBeans[0]].push(subBeans[1]);
+
+		});
+		
+		var count = 0;
+		
+		// now build the tree structure with attributes and operations
+		$.each( subStructure, function(name, value){
+			beans = name.split("=");
+			mbeansList += "<li><span class='"+beans[0]+"'><strong>"+beans[1]+"</strong></span><ul>";
+			$.each( value, function(index, val){
+				if (val != undefined ) {
+					valBeans = val.split("=");
+					mbeansList += "<li><span class='"+valBeans[0]+"'><strong>"+valBeans[1]+"</strong></span><ul>";
+					mbeansList += drawAttributes(mbeans[count].attributes);
+				 	mbeansList += drawOperations(mbeans[count].operations);
+				 	mbeansList += "</ul></li>";
+				} else {
+					mbeansList += drawAttributes(mbeans[count].attributes);
+					mbeansList += drawOperations(mbeans[count].operations);
+				}
+				count++;
+			});
+			mbeansList += "</ul></li>";
+		});
+
+
 	}
 	return mbeansList;
-}
-
-function drawSubBeans(mbeans) {
-	var subBeans = "";
-	
-	for (var idx in mbeans) {
-		beans = mbeans[idx].split("=");
-		/*class='"+beans[0]+"' should be an own class*/
-		subBeans += "<li><span class='"+beans[0]+"'><strong>"+beans[1]+"</strong></span><ul>";
-	}
-	
-	return subBeans;
 }
 
 function drawAttributes(attributes) {
