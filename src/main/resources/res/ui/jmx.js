@@ -65,7 +65,7 @@ function entryInternal( /* Object */ mbean, domainTree ) {
     var domain = mbean.domain;
 	
 	$("<li><span class='folder'><strong>"+domain+"</strong></span><ul>" + 
-		drawMBeans(mbean.mbeans) +
+		drawMBeans(mbean) +
  		"</ul></li>").appendTo(domainTree);
 
 }
@@ -75,9 +75,9 @@ function drawMBeans(mbeans) {
 	
 	var subStructure = {};
 	
-	if (mbeans.length > 0) {
+	if (mbeans.mbeans.length > 0) {
 		//first build up the sub tree structure
-		$.each(mbeans, function(index, bean){
+		$.each(mbeans.mbeans, function(index, bean){
 			mbean = bean.mbean;
 			subBeans = mbean.split(",");			
 			if (subStructure[subBeans[0]] == undefined){
@@ -97,12 +97,12 @@ function drawMBeans(mbeans) {
 				if (val != undefined ) {
 					valBeans = val.split("=");
 					mbeansList += "<li><span class='"+valBeans[0]+"'><strong>"+valBeans[1]+"</strong></span><ul>";
-					mbeansList += drawAttributes(mbeans[count].attributes);
-				 	mbeansList += drawOperations(mbeans[count].operations);
+					mbeansList += drawAttributes(mbeans.mbeans[count].attributes, mbeans.domain, name, val);
+				 	mbeansList += drawOperations(mbeans.mbeans[count].operations, mbeans.domain, name, val);
 				 	mbeansList += "</ul></li>";
 				} else {
-					mbeansList += drawAttributes(mbeans[count].attributes);
-					mbeansList += drawOperations(mbeans[count].operations);
+					mbeansList += drawAttributes(mbeans.mbeans[count].attributes, mbeans.domain, name);
+					mbeansList += drawOperations(mbeans.mbeans[count].operations, mbeans.domain, name);
 				}
 				count++;
 			});
@@ -114,7 +114,7 @@ function drawMBeans(mbeans) {
 	return mbeansList;
 }
 
-function drawAttributes(attributes) {
+function drawAttributes(attributes, domain, mbean, val) {
 	var attributeList = "";
 	
 	if (attributes.length > 0) {
@@ -123,9 +123,9 @@ function drawAttributes(attributes) {
 			attributeProps = attributes[idx].split(":");
 			isWritable = String(attributeProps[1].split("=")[1]);
 			if ("true"==isWritable)
-				attributeList += "<li><span class='file'>"+attributeProps[0]+"</span></li>";
+				attributeList += "<li><span class='file'><a href='"+pluginRoot + "/"+domain+".json?"+mbean+"&amp;"+val+"&amp;attribute="+attributeProps[0]+"'>"+attributeProps[0]+"</a></span></li>";
 			else
-				attributeList += "<li><span class='file-readonly'>"+attributeProps[0]+"</span></li>";
+				attributeList += "<li><span class='file-readonly'><a href='"+pluginRoot + "/"+domain+".json?"+mbean+"&amp;"+val+"&amp;attribute="+attributeProps[0]+"'>"+attributeProps[0]+"</a></span></li>";
 		}
 		attributeList += "</ul></li>";
 	}
@@ -133,13 +133,13 @@ function drawAttributes(attributes) {
 	return attributeList;
 }
 
-function drawOperations(operations) {
+function drawOperations(operations, mbeanDomain) {
 	var operationsList = "";
 	
 	if (operations.length > 0) {
 		operationsList = "<li><span class='operations'><strong>Operations</strong></span><ul>";
 		for (var idx in operations) {
-			operationsList += "<li><span class='operation'>"+operations[idx]+"</span></li>";
+			operationsList += "<li><span class='operation'><a href='/"+mbeanDomain+".json?operation="+operations[idx]+"'>"+operations[idx]+"</a></span></li>";
 		}
 		operationsList += "</ul></li>";
 	}	
@@ -258,6 +258,11 @@ function renderDetails( data ) {
 
 
 $(document).ready(function(){
+	// handle click events
+	$("a").click(function(event){
+		alert("As you can see, the link no longer took you to jquery.com");
+	});
+	
 	$('#reload').click(function() {
 		$.get(pluginRoot + '/.json', null, renderData, 'json');
 	}).click();
@@ -293,6 +298,8 @@ $(document).ready(function(){
 		if (filter) $.get(pluginRoot + '/.json', { 'filter' : filter }, renderData, 'json');
 		return false;
 	});
+	
+	
 	
 	// check for cookie
 	mbeanTable = $('#mbeanTable').tablesorter({
