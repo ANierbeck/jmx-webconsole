@@ -259,13 +259,13 @@ function renderDetails( data ) {
 
 $(document).ready(function(){
 	// handle click events
-	$("a").click(function(event){
-		alert("As you can see, the link no longer took you to jquery.com");
-	});
+//	$("a").click(function(event){
+//		alert("As you can see, the link no longer took you to jquery.com");
+//	});
 	
-	$('#reload').click(function() {
-		$.get(pluginRoot + '/.json', null, renderData, 'json');
-	}).click();
+//	$('#reload').click(function() {
+//		$.get(pluginRoot + '/.json', null, renderData, 'json');
+//	}).click();
 	
 	mbeanOpError = $('#mbeanOpError').dialog({
 		autoOpen: false,
@@ -302,20 +302,33 @@ $(document).ready(function(){
 	
 	
 	// check for cookie
-	mbeanTable = $('#mbeanTable').tablesorter({
-		headers: {
-			0: { sorter:"digit" },
-			5: { sorter: false }
-		},
-		textExtraction:mixedLinksExtraction
-	}).bind("sortEnd", function() {
-		var t = mbeanTable.eq(0).attr("config");
-		if (t.sortList) $.cookies.set("webconsolembeanlist", t.sortList);
+//	mbeanTable = $('#mbeanTable').tablesorter({
+//		headers: {
+//			0: { sorter:"digit" },
+//			5: { sorter: false }
+//		},
+//		textExtraction:mixedLinksExtraction
+//	}).bind("sortEnd", function() {
+//		var t = mbeanTable.eq(0).attr("config");
+//		if (t.sortList) $.cookies.set("webconsolembeanlist", t.sortList);
+//	});
+	
+//	mbeanBody  = mbeanTable.find('tbody');
+//	mbeansTemplate = mbeanBody.find('tr').clone();
+	
+//	renderData(lastMBeanData);
+	
+	$("#domainTree").treeview({
+		url: pluginRoot + '/.json',
+		// add some additional, dynamic data and request with POST
+		ajax: {
+			data: {
+				"action": function() {
+					return "yeah: " + new Date;
+				}
+			},
+			type: "post"
+		}
 	});
-	
-	mbeanBody  = mbeanTable.find('tbody');
-	mbeansTemplate = mbeanBody.find('tr').clone();
-	
-	renderData(lastMBeanData);
 });
 
