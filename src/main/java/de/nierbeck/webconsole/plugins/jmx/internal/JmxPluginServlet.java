@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -268,13 +269,34 @@ public class JmxPluginServlet extends HttpServlet {
             }
 
             PrintWriter pw = response.getWriter();
-            this.renderJSON(pw, mbeanDomain);
+            
+            Map parameterMap = request.getParameterMap();
+            
+            if (mbeanDomain == null || (mbeanDomain != null &&  parameterMap.isEmpty())) {
+            	this.renderJSON(pw, mbeanDomain); //just loaded initialy or when using the filter
+            } else {
+            	//parameter map is set, use it.
+            	//first check if it is a attribute or operation
+            	if (parameterMap.containsKey("attribute")) {
+            		//handle attribute calls
+            	} else if (parameterMap.containsKey("operation")) {
+            		//Handle operation
+            		this.renderAttribute(pw, mbeanDomain, parameterMap);
+            	} else {
+            		//what is this? shouldn't happen.
+            		return;
+            	}
+            }
             
 			// nothing more to do
 			return;
 		}
 
 		this.renderContent(request, response);
+	}
+
+	private void renderAttribute(PrintWriter pw, String mbeanDomain,
+			Map parameterMap) {
 	}
 
 	protected void renderContent(HttpServletRequest request,
