@@ -6,13 +6,10 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -40,8 +37,6 @@ public class JmxPluginServlet extends HttpServlet {
 	private static final String ACTION_CLEAR = "clear";
 
 	private static final String PARAMETER_ACTION = "action";
-
-	private static final String PARAMETER_ROOT = "root";
 
 	public JmxPluginServlet() {
 		TEMPLATE = readTemplateFile(getClass(), "/res/jmx-template.html");
@@ -90,19 +85,10 @@ public class JmxPluginServlet extends HttpServlet {
 		if (objectNames != null) {
 
 			pw.write("{");
-			jsonKey(pw, "text");
+			jsonKey(pw, "domain");
 			jsonValue(pw, domain);
 			pw.write(',');
-			jsonKey(pw, "expanded");
-			jsonValue(pw, false);
-			pw.write(',');
-			jsonKey(pw, "classes");
-			jsonValue(pw, "folder");
-			pw.write(',');
-			jsonKey(pw, "id");
-			jsonValue(pw, domain);
-			pw.write(',');
-			jsonKey(pw, "children");
+			jsonKey(pw, "mbeans");
 			pw.write("[");
 
 			final Iterator iter = objectNames.iterator();
@@ -111,8 +97,6 @@ public class JmxPluginServlet extends HttpServlet {
 				final MBeanInfo mBeanInfo = mBeanServer
 						.getMBeanInfo(objectName);
 				renderJsonDomain(pw, objectName, mBeanInfo);
-				if (iter.hasNext())
-					pw.write(',');
 			}
 
 			pw.write("]}");
@@ -132,68 +116,46 @@ public class JmxPluginServlet extends HttpServlet {
 			final ObjectName objectName, final MBeanInfo mBeanInfo)
 			throws IOException {
 		pw.write("{");
-		// using toString to make shure that type is set before any other
-		// property
+		jsonKey(pw, "mbean");
+		//using toString to make shure that type is set before any other property
 		String canonicalName = objectName.toString();
 		String[] split = canonicalName.split(":");
+		jsonValue(pw, split[1]);
 
-		String[] subPaths = split[1].split(",");
+		pw.write(',');
+		jsonKey(pw, "attributes");
+		pw.write("[");
 
-		for (int i = 0; i < subPaths.length; i++) {
-
-			String[] typeAndName = subPaths[i].split("=");
-
-			if (i > 0) {
-				jsonKey(pw, "children");
-				pw.write("[{");
-			}
-
-			jsonKey(pw, "text");
-			jsonValue(pw, typeAndName[1]);
-			pw.write(',');
-
-			jsonKey(pw, "classes");
-			jsonValue(pw, typeAndName[0]);
-
-			if (i < subPaths.length - 1)
+		final MBeanAttributeInfo[] attrs = mBeanInfo.getAttributes();
+		for (int i = 0; i < attrs.length; i++) {
+			final MBeanAttributeInfo attr = attrs[i];
+			if (!attr.isReadable())
+				continue; //skip non readable properties
+			jsonValue(pw, attr.getName() + ":writable=" + attr.isWritable());
+			if (i < attrs.length) {
 				pw.write(',');
-
-			if (i < subPaths.length && i > 0) {
-				pw.write("}]");
+			}
+			}
+		pw.write("]");
+			pw.write(',');
+		jsonKey(pw, "operations");
+		pw.write("[");
+		final MBeanOperationInfo[] ops = mBeanInfo.getOperations();
+		for (int i = 0; i < ops.length; i++) {
+			final MBeanOperationInfo op = ops[i];
+//			jsonValue(pw, op.getDescription() + ": " + op.getName() + " - "
+//					+ op.getReturnType());
+			jsonValue(pw, op.getName());
+			if (i < ops.length) {
+				pw.write(',');
 			}
 
 		}
-
-		/*
-		 * pw.write(','); jsonKey(pw, "children"); pw.write("[{"); final
-		 * MBeanAttributeInfo[] attrs = mBeanInfo.getAttributes(); if
-		 * (attrs.length > 0) { jsonKey(pw, "text"); jsonValue(pw,
-		 * "attributes"); pw.write(","); jsonKey(pw, "classes"); jsonValue(pw,
-		 * "attribute"); pw.write(","); jsonKey(pw,"children"); pw.write("[");
-		 * for (int i = 0; i < attrs.length; i++) { final MBeanAttributeInfo
-		 * attr = attrs[i]; if (!attr.isReadable()) continue; //skip non
-		 * readable properties pw.write("{"); jsonKey(pw, "text"); jsonValue(pw,
-		 * attr.getName()); pw.write(','); if (attr.isWritable()) { jsonKey(pw,
-		 * "classes"); jsonValue(pw, "readonly"); } else { jsonKey(pw,
-		 * "classes"); jsonValue(pw, "file"); } pw.write('}'); if (i <
-		 * attrs.length-1) { pw.write(','); } } pw.write("]}"); pw.write(',');
-		 * pw.write("{"); } jsonKey(pw, "text"); jsonValue(pw, "operations");
-		 * pw.write(","); jsonKey(pw, "classes"); jsonValue(pw, "attribute");
-		 * final MBeanOperationInfo[] ops = mBeanInfo.getOperations(); if
-		 * (ops.length > 0) { pw.write(","); jsonKey(pw,"children");
-		 * pw.write("["); for (int i = 0; i < ops.length; i++) { final
-		 * MBeanOperationInfo op = ops[i]; // jsonValue(pw, op.getDescription()
-		 * + ": " + op.getName() + " - " // + op.getReturnType());
-		 * pw.write("{"); jsonKey(pw, "text"); jsonValue(pw, op.getName());
-		 * pw.write(','); jsonKey(pw, "classes"); jsonValue(pw, "operation");
-		 * pw.write("}"); if (i < ops.length-1) { pw.write(','); } }
-		 * pw.write("]"); } pw.write("}]");
-		 */
-		pw.write("}");
+		pw.write("]");
+		pw.write("},");
 	}
 
-	private final String readTemplateFile(
-			final Class<? extends JmxPluginServlet> clazz,
+	private final String readTemplateFile(final Class clazz,
 			final String templateFile) {
 		InputStream templateStream = getClass().getResourceAsStream(
 				templateFile);
@@ -233,8 +195,6 @@ public class JmxPluginServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		final String action = req.getParameter(PARAMETER_ACTION);
-		final String root = req.getParameter(PARAMETER_ROOT);
-		final HttpSession session = req.getSession(true);
 		// for now we only have the clear action
 		if (ACTION_CLEAR.equals(action)) {
 		}
@@ -242,163 +202,40 @@ public class JmxPluginServlet extends HttpServlet {
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding("utf-8");
 
-		try {
-			if ("source".equals(root)) {
-				renderDomain(resp.getWriter(), getDomains());
-			} else if (root != null) {
-				renderDomainValues(resp.getWriter(), getDomains(), root);
-			} else {
 				renderJSON(resp.getWriter(), null);
 			}
-		} catch (Exception e) {
-			log("Can't render json for domains", e);
-			throw new ServletException(e);
-		}
-	}
 
-	private void renderDomainValues(PrintWriter pw,
-			HashMap<String, ArrayList<ObjectName>> domains, String mbean) {
-		pw.write('[');
-		ArrayList<ObjectName> objectNames = domains.get(mbean);
-
-		HashMap<String, List<Entry<String, String>>> sortedMap = new HashMap<String, List<Entry<String, String>>>();
-
-		for (ObjectName objectName : objectNames) {
-			
-			objectName.getCanonicalName();
-			
-			String canonicalKeyPropertyListString = objectName
-					.getCanonicalKeyPropertyListString();
-			String[] split = canonicalKeyPropertyListString.split(",");
-
-			for (String keyProps : split) {
-				String[] keyProp = keyProps.split("=");
-				Entry<String, String> entry = new SimpleEntry(keyProp[0],
-						keyProp[1]);
-				List<Entry<String, String>> list = sortedMap.get(keyProp[1]);
-				if (list == null) {
-					list = new ArrayList<Entry<String, String>>();
-					sortedMap.put(keyProp[1], list);
-				}
-				list.add(entry);
-			}
-		}
-
-		TreeSet<String> keys = new TreeSet<String>(sortedMap.keySet());
-
-		for (String key : keys) {
-
-			String classes = "";
-			String id = mbean;
-
-			List<Entry<String, String>> list = sortedMap.get(key);
-
-			for (Entry<String, String> entry : list) {
-				String descriptor = entry.getKey();
-				String value = entry.getValue();
-				if (value.equals(key))
-					classes = descriptor;
-			}
-//
-//			id += ":";
-//			id += mbeanSelector.substring(1, mbeanSelector.length() - 1);
-
-			pw.write("{");
-			jsonKey(pw, "text");
-			jsonValue(pw, key);
-			pw.write(',');
-			jsonKey(pw, "expanded");
-			jsonValue(pw, false);
-			pw.write(',');
-			jsonKey(pw, "classes");
-			jsonValue(pw, classes);
-			pw.write(',');
-			jsonKey(pw, "id");
-			jsonValue(pw, id);
-			pw.write(',');
-			jsonKey(pw, "hasChildren");
-			jsonValue(pw, true);
-			pw.write('}');
-			pw.write(',');
-		}
-
-		pw.write(']');
-	}
-
-	private void renderDomain(PrintWriter pw,
-			HashMap<String, ArrayList<ObjectName>> domains) {
-		final Set<String> keyset = new TreeSet<String>(domains.keySet());
-		pw.write('[');
-		final Iterator<String> iter = keyset.iterator();
-		while (iter.hasNext()) {
-			final String domain = iter.next();
-
-			pw.write("{");
-			jsonKey(pw, "text");
-			jsonValue(pw, domain);
-			pw.write(',');
-			jsonKey(pw, "expanded");
-			jsonValue(pw, false);
-			pw.write(',');
-			jsonKey(pw, "classes");
-			jsonValue(pw, "folder");
-			pw.write(',');
-			jsonKey(pw, "id");
-			jsonValue(pw, domain);
-			pw.write(',');
-			jsonKey(pw, "hasChildren");
-			jsonValue(pw, true);
-			pw.write('}');
-
-			if (iter.hasNext())
-				pw.write(',');
-
-		}
-		pw.write(']');
-	}
-
-	private HashMap<String, ArrayList<ObjectName>> getDomains()
-			throws InstanceNotFoundException, IntrospectionException,
-			MalformedObjectNameException, ReflectionException,
-			NullPointerException {
+	private void renderJSON(final PrintWriter pw, String mbeanDomain) throws IOException {
 		if (mBeanServer == null) {
 			mBeanServer = ManagementFactory.getPlatformMBeanServer();
-		}
+				}
+		StringBuffer statusLine = new StringBuffer();
+			pw.write("{");
 
-		HashMap<String, ArrayList<ObjectName>> domains = null;
-
-		if (mBeanServer != null)
-			domains = getDomains(mBeanServer, null);
-		else
-			domains = new HashMap<String, ArrayList<ObjectName>>();
-
-		return domains;
-
+		if (mBeanServer != null) {
+			try {
+				final HashMap domains = getDomains(mBeanServer, mbeanDomain);
+				final Set keyset = new TreeSet(domains.keySet());
+				statusLine.append(keyset.size());
+				statusLine.append(" Domain");
+				if (keyset.size() > 1) {
+					statusLine.append('s');
 	}
+				statusLine.append(" received.");
 
-	private void renderJSON(final PrintWriter pw, String mbean)
-			throws IOException, InstanceNotFoundException,
-			IntrospectionException, ReflectionException,
-			MalformedObjectNameException, NullPointerException {
+				jsonKey(pw, "status");
+				jsonValue(pw, statusLine.toString());
 
-		final HashMap<String, ArrayList<ObjectName>> domains = getDomains(
-				mBeanServer, mbean);
-		final Set<String> keyset = new TreeSet<String>(domains.keySet());
-		/*
-		 * statusLine.append(keyset.size()); statusLine.append(" Domain"); if
-		 * (keyset.size() > 1) { statusLine.append('s'); }
-		 * statusLine.append(" received.");
-		 * 
-		 * jsonKey(pw, "status"); jsonValue(pw, statusLine.toString());
-		 * 
-		 * pw.write(','); jsonKey(pw, "data");
-		 */
+			pw.write(',');
+				jsonKey(pw, "data");
+
 		pw.write('[');
-		final Iterator<String> iter = keyset.iterator();
+				final Iterator iter = keyset.iterator();
 		while (iter.hasNext()) {
-			final String domain = iter.next();
+					final String domain = (String) iter.next();
 
-			final ArrayList objectNames = domains.get(domain);
+					final ArrayList objectNames = (ArrayList) domains
+							.get(domain);
 
 			Collections.sort(objectNames);
 
@@ -409,7 +246,12 @@ public class JmxPluginServlet extends HttpServlet {
 
 		}
 		pw.write(']');
+			} catch (final Exception e) {
+				e.printStackTrace();
+			}
+		}
 
+		pw.write("}");
 	}
 
 	protected void doGet(HttpServletRequest request,
