@@ -20,12 +20,13 @@ var i18n = {
 <!-- top header -->
 <form method="post" enctype="multipart/form-data" action="" class="filterForm">
 	<div class="ui-widget-header ui-corner-top buttonGroup">
-		<div class="filterBox">
-			<input  class="filter" value="" title="${mbeans.filter.help}" />
-			<span   class="filterClear ui-icon ui-icon-close" title="${mbeans.filter.clear}">&nbsp;</span>
-			<button class="filterApply" title="${bundles.filter.help}">${mbeans.filter.apply}</button>
-			<button class="filterLDAP"  title="${bundles.filter.ldap.tip}">${mbeans.filter.ldap}</button>
-		</div>
+<!--		<div class="filterBox">-->
+<!--			<input  class="filter" value="" title="${mbeans.filter.help}" />-->
+<!--			<span   class="filterClear ui-icon ui-icon-close" title="${mbeans.filter.clear}">&nbsp;</span>-->
+<!--			<button class="filterApply" title="${bundles.filter.help}">${mbeans.filter.apply}</button>-->
+<!--			<button class="filterLDAP"  title="${bundles.filter.ldap.tip}">${mbeans.filter.ldap}</button>-->
+<!--		</div>-->
+		<button id="clear" class="reloadButton" type="button">${mbeans.clear}</button>
 		<button id="reload" class="reloadButton" type="button">${reload}</button>
 	</div>
 </form>
@@ -45,7 +46,7 @@ var i18n = {
 			<td>
 				<ul id="domainTree" class="filetree"></ul>
 			</td> <!-- domain -->
-			<td><div id="detail">&nbsp;</div> </td> <!-- details -->
+			<td><ul id="detail">&nbsp;</ul> </td> <!-- details -->
 			<!-- details 
 			<td>
 				<div class="bIcon ui-icon ui-icon-triangle-1-e" title="Show Details">&nbsp;</div>
@@ -65,12 +66,13 @@ var i18n = {
 <!-- bottom header -->
 <form method="post" enctype="multipart/form-data" action="" class="filterForm">
 	<div class="ui-widget-header ui-corner-bottom buttonGroup">
-		<div class="filterBox">
-			<input  class="filter" value="" title="${mbeans.filter.help}" />
-			<span   class="filterClear ui-icon ui-icon-close" title="${mbeans.filter.clear}">&nbsp;</span>
-			<button class="filterApply" title="${bundles.filter.help}">${mbeans.filter.apply}</button>
-			<button class="filterLDAP"  title="${bundles.filter.ldap.tip}">${mbeans.filter.ldap}</button>
-		</div>
+<!--		<div class="filterBox">-->
+<!--			<input  class="filter" value="" title="${mbeans.filter.help}" />-->
+<!--			<span   class="filterClear ui-icon ui-icon-close" title="${mbeans.filter.clear}">&nbsp;</span>-->
+<!--			<button class="filterApply" title="${bundles.filter.help}">${mbeans.filter.apply}</button>-->
+<!--			<button class="filterLDAP"  title="${bundles.filter.ldap.tip}">${mbeans.filter.ldap}</button>-->
+<!--		</div>-->
+		<button id="clear" class="reloadButton" type="button">${mbeans.clear}</button>
 		<button id="reload" class="reloadButton" type="button">${reload}</button>
 	</div>
 </form>

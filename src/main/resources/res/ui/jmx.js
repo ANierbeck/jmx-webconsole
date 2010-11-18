@@ -74,7 +74,7 @@ function drawMBeans(eventData) {
 	
 	var subStructure = {};
 	
-	if (mbeans.mbeans.length > 0) {
+	if (mbeans.length > 0) {
 		//first build up the sub tree structure
 		$.each(mbeans, function(index, bean){
 			var mbean = bean.mbean;
@@ -144,13 +144,16 @@ function drawOperations(eventData) {
 	
 	var mbeanCount = eventData.data[eventData.selected].count;
 	var operations = eventData.data[eventData.selected].mbeans[mbeanCount].operations;
-	
+
+	var domain = eventData.data[eventData.selected].domain;
+	var mbean = eventData.data[eventData.selected].mbeans[mbeanCount].mbean
+
 	var operationsList = "";
 	
 	if (operations.length > 0) {
 		operationsList = "<li><span class='operations'><strong>Operations</strong></span><ul>";
 		for (var idx in operations) {
-			operationsList += "<li><span class='operation'><a href='/"+mbeanDomain+".json?operation="+operations[idx]+"'>"+operations[idx]+"</a></span></li>";
+			operationsList += "<li><span class='operation'><a type='attribute' href='javascript:showOperationDetail(\""+domain+"\",\""+mbean+"\",\""+operations[idx]+"\"'>"+operations[idx]+"</a></span></li>";
 		}
 		operationsList += "</ul></li>";
 	}	
@@ -167,13 +170,17 @@ function showAttributeDetail(domain, mbean, attribute) {
 
 function renderAttributeDetail(attributeDetail) {
 	var detail = $('#detail');
-	attributeDetail.appendTo(detail);	
+	
+	var outdetail = "<li><span >"+attributeDetail.attributeName+": "+attributeDetail.attributeValue+"</span></li>";
+	
+	$(outdetail).appendTo(detail);
 }
 
 $(document).ready(function(){
 	$('#reload').click(function() {
 		$.get(pluginRoot + '/.json', null, renderData, 'json');
 	}).click();
+	
 	
 	mbeanOpError = $('#mbeanOpError').dialog({
 		autoOpen: false,
@@ -207,9 +214,25 @@ $(document).ready(function(){
 		return false;
 	});
 	
+	// check for cookie
+	mbeanTable = $('#mbeanTable').tablesorter({
+		headers: {
+			0: { sorter:"digit" },
+			5: { sorter: false }
+		},
+		textExtraction:mixedLinksExtraction
+	}).bind("sortEnd", function() {
+		var t = mbeanTable.eq(0).attr("config");
+		if (t.sortList) $.cookies.set("webconsolembeanlist", t.sortList);
+	});
 	
 	mbeanBody  = mbeanTable.find('tbody');
 	mbeansTemplate = mbeanBody.find('tr').clone();
+	
+	$('#clear').click(function(){
+		$('#detail').empty();
+	}).click();
+
 	
 	renderData(lastMBeanData);
 });

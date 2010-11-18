@@ -8,6 +8,7 @@ import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -117,7 +118,8 @@ public class JmxPluginServlet extends HttpServlet {
 			throws IOException {
 		pw.write("{");
 		jsonKey(pw, "mbean");
-		//using toString to make shure that type is set before any other property
+		// using toString to make shure that type is set before any other
+		// property
 		String canonicalName = objectName.toString();
 		String[] split = canonicalName.split(":");
 		jsonValue(pw, split[1]);
@@ -130,21 +132,21 @@ public class JmxPluginServlet extends HttpServlet {
 		for (int i = 0; i < attrs.length; i++) {
 			final MBeanAttributeInfo attr = attrs[i];
 			if (!attr.isReadable())
-				continue; //skip non readable properties
+				continue; // skip non readable properties
 			jsonValue(pw, attr.getName() + ":writable=" + attr.isWritable());
 			if (i < attrs.length) {
 				pw.write(',');
 			}
-			}
+		}
 		pw.write("]");
-			pw.write(',');
+		pw.write(',');
 		jsonKey(pw, "operations");
 		pw.write("[");
 		final MBeanOperationInfo[] ops = mBeanInfo.getOperations();
 		for (int i = 0; i < ops.length; i++) {
 			final MBeanOperationInfo op = ops[i];
-//			jsonValue(pw, op.getDescription() + ": " + op.getName() + " - "
-//					+ op.getReturnType());
+			// jsonValue(pw, op.getDescription() + ": " + op.getName() + " - "
+			// + op.getReturnType());
 			jsonValue(pw, op.getName());
 			if (i < ops.length) {
 				pw.write(',');
@@ -202,50 +204,52 @@ public class JmxPluginServlet extends HttpServlet {
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding("utf-8");
 
-				renderJSON(resp.getWriter(), null);
-			}
+		renderJSON(resp.getWriter(), null);
+	}
 
-	private void renderJSON(final PrintWriter pw, String mbeanDomain) throws IOException {
+	private void renderJSON(final PrintWriter pw, String mbeanDomain)
+			throws IOException {
 		if (mBeanServer == null) {
 			mBeanServer = ManagementFactory.getPlatformMBeanServer();
-				}
+		}
 		StringBuffer statusLine = new StringBuffer();
-			pw.write("{");
+		pw.write("{");
 
 		if (mBeanServer != null) {
 			try {
-				final HashMap domains = getDomains(mBeanServer, mbeanDomain);
-				final Set keyset = new TreeSet(domains.keySet());
+				final HashMap<String, ArrayList<ObjectName>> domains = getDomains(
+						mBeanServer, mbeanDomain);
+				final Set<String> keyset = new TreeSet<String>(domains.keySet());
 				statusLine.append(keyset.size());
 				statusLine.append(" Domain");
 				if (keyset.size() > 1) {
 					statusLine.append('s');
-	}
+				}
 				statusLine.append(" received.");
 
 				jsonKey(pw, "status");
 				jsonValue(pw, statusLine.toString());
 
-			pw.write(',');
+				pw.write(',');
 				jsonKey(pw, "data");
 
-		pw.write('[');
-				final Iterator iter = keyset.iterator();
-		while (iter.hasNext()) {
+				pw.write('[');
+				final Iterator<String> iter = keyset.iterator();
+				while (iter.hasNext()) {
 					final String domain = (String) iter.next();
 
-					final ArrayList objectNames = (ArrayList) domains
+					final ArrayList<ObjectName> objectNames = domains
 							.get(domain);
 
-			Collections.sort(objectNames);
+					Collections.sort(objectNames);
 
-			renderJsonDomain(pw, domain, objectNames);
+					renderJsonDomain(pw, domain, objectNames);
 
-			if (iter.hasNext())
-				pw.write(',');
+					if (iter.hasNext())
+						pw.write(',');
 
-		}
-		pw.write(']');
+				}
+				pw.write(']');
 			} catch (final Exception e) {
 				e.printStackTrace();
 			}
@@ -265,35 +269,37 @@ public class JmxPluginServlet extends HttpServlet {
 			// remove .json
 			info = info.substring(0, info.length() - 5);
 
-            // remove label and starting slash
-            info = info.substring(getLabel().length() + 1);
-			// we only accept direct requests to a bundle if they have a slash after the label
-            String mbeanDomain = null;
-            if (info.startsWith("/") )
-            {
-                mbeanDomain = info.substring(1);
-            }
+			// remove label and starting slash
+			info = info.substring(getLabel().length() + 1);
+			// we only accept direct requests to a bundle if they have a slash
+			// after the label
+			String mbeanDomain = null;
+			if (info.startsWith("/")) {
+				mbeanDomain = info.substring(1);
+			}
 
-            PrintWriter pw = response.getWriter();
-            
-            Map parameterMap = request.getParameterMap();
-            
-            if (mbeanDomain == null || (mbeanDomain != null &&  parameterMap.isEmpty())) {
-            	this.renderJSON(pw, mbeanDomain); //just loaded initialy or when using the filter
-            } else {
-            	//parameter map is set, use it.
-            	//first check if it is a attribute or operation
-            	if (parameterMap.containsKey("attribute")) {
-            		//handle attribute calls
-            	} else if (parameterMap.containsKey("operation")) {
-            		//Handle operation
-            		this.renderAttribute(pw, mbeanDomain, parameterMap);
-            	} else {
-            		//what is this? shouldn't happen.
-            		return;
-            	}
-            }
-            
+			PrintWriter pw = response.getWriter();
+
+			Map parameterMap = request.getParameterMap();
+
+			if (mbeanDomain == null
+					|| (mbeanDomain != null && parameterMap.isEmpty())) {
+				this.renderJSON(pw, mbeanDomain); // just loaded initialy or
+													// when using the filter
+			} else {
+				// parameter map is set, use it.
+				// first check if it is a attribute or operation
+				if (parameterMap.containsKey("attribute")) {
+					// handle attribute calls
+					this.renderAttribute(pw, mbeanDomain, parameterMap);
+				} else if (parameterMap.containsKey("operation")) {
+					// Handle operation
+				} else {
+					// what is this? shouldn't happen.
+					return;
+				}
+			}
+
 			// nothing more to do
 			return;
 		}
@@ -303,6 +309,42 @@ public class JmxPluginServlet extends HttpServlet {
 
 	private void renderAttribute(PrintWriter pw, String mbeanDomain,
 			Map parameterMap) {
+		try {
+			
+			String[] mbeans = (String[]) parameterMap.get("mbean");
+			
+			String[] attribute = (String[]) parameterMap.get("attribute");
+			
+			HashMap<String, ArrayList<ObjectName>> domains = getDomains(mBeanServer, mbeanDomain);
+			Collection<ArrayList<ObjectName>> values = domains.values();
+			boolean found = false;
+			
+			pw.write("{");
+			
+			jsonKey(pw, "attributeName");
+			jsonValue(pw, attribute[0]);
+			
+			pw.write(",");
+			
+			for (ArrayList<ObjectName> arrayList : values) {
+				for (ObjectName objectName : arrayList) {
+					if (objectName.getCanonicalName().contains(mbeans[0])) {
+						//TODO: getAttribute values!
+						Object attributeValue = mBeanServer.getAttribute(objectName, attribute[0]);
+						found = true;
+						jsonKey(pw, "attributeValue");
+						jsonValue(pw, attributeValue.toString());
+						break;
+					}
+				}
+				if (found)
+					break;
+			}
+			
+			pw.write("}");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected void renderContent(HttpServletRequest request,
