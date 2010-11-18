@@ -14,9 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -424,28 +422,45 @@ public class JmxPluginServlet extends HttpServlet {
 
 			// remove .json
 			info = info.substring(0, info.length() - 5);
-			// remove label and starting slash
-			info = info.substring(getLabel().length() + 1);
-			// we only accept direct requests to a bundle if they have a slash
-			// after the label
-			String mbeanDomain = null;
-			if (info.startsWith("/")) {
-				mbeanDomain = info.substring(1);
-			}
 
-			PrintWriter pw = response.getWriter();
-			try {
-				this.renderJSON(pw, mbeanDomain);
-			} catch (Exception e) {
-				log("Can't render JSON", e);
-				throw new ServletException(e);
-			}
+            // remove label and starting slash
+            info = info.substring(getLabel().length() + 1);
+			// we only accept direct requests to a bundle if they have a slash after the label
+            String mbeanDomain = null;
+            if (info.startsWith("/") )
+            {
+                mbeanDomain = info.substring(1);
+            }
 
+            PrintWriter pw = response.getWriter();
+            
+            Map parameterMap = request.getParameterMap();
+            
+            if (mbeanDomain == null || (mbeanDomain != null &&  parameterMap.isEmpty())) {
+            	this.renderJSON(pw, mbeanDomain); //just loaded initialy or when using the filter
+            } else {
+            	//parameter map is set, use it.
+            	//first check if it is a attribute or operation
+            	if (parameterMap.containsKey("attribute")) {
+            		//handle attribute calls
+            	} else if (parameterMap.containsKey("operation")) {
+            		//Handle operation
+            		this.renderAttribute(pw, mbeanDomain, parameterMap);
+            	} else {
+            		//what is this? shouldn't happen.
+            		return;
+            	}
+            }
+            
 			// nothing more to do
 			return;
 		}
 
 		this.renderContent(request, response);
+	}
+
+	private void renderAttribute(PrintWriter pw, String mbeanDomain,
+			Map parameterMap) {
 	}
 
 	protected void renderContent(HttpServletRequest request,
