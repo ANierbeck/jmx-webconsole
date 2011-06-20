@@ -7,7 +7,6 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,12 +26,17 @@ import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
 import javax.servlet.ServletException;
-import javax.servlet.http.*;
-
-import org.apache.felix.webconsole.internal.core.BundlesServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class JmxPluginServlet extends HttpServlet {
-	private MBeanServer mBeanServer;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private transient MBeanServer mBeanServer;
 
 	private final String TEMPLATE;
 	private static final String ACTION_CLEAR = "clear";
