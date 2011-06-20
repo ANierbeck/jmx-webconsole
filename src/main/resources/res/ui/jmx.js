@@ -34,6 +34,8 @@ function renderData( eventData, filter )  {
 
     domainDetailsRow.appendTo(mbeanBody);
 	
+	$( "#tabs" ).tabs();
+    
 	$("#domainTree").treeview({
 		animated: "fast",
 		collapsed: true,
