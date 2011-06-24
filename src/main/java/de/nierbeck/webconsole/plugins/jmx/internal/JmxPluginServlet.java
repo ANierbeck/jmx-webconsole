@@ -151,8 +151,6 @@ public class JmxPluginServlet extends HttpServlet {
 				// attr.isWritable());
 				jsonKey(pw, attr.getName());
 				pw.write("[");
-				jsonValue(pw, "name="+attr.getName());
-				pw.write(",");
 				jsonValue(pw, "writable=" + attr.isWritable());
 				Object value = null;
 				try {
