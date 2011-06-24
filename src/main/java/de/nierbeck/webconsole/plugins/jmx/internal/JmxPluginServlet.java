@@ -11,13 +11,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.management.AttributeNotFoundException;
+import javax.management.Descriptor;
 import javax.management.InstanceNotFoundException;
 import javax.management.IntrospectionException;
 import javax.management.MBeanAttributeInfo;
+import javax.management.MBeanException;
 import javax.management.MBeanInfo;
 import javax.management.MBeanOperationInfo;
 import javax.management.MBeanServer;
@@ -25,6 +29,7 @@ import javax.management.MalformedObjectNameException;
 import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.RuntimeMBeanException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -56,19 +61,20 @@ public class JmxPluginServlet extends HttpServlet {
 	}
 
 	public HashMap<String, ArrayList<ObjectName>> getDomains(
-			final MBeanServer mBeanServer, String mbeanDomain)
+			final MBeanServer mBeanServer, String mbeanDomain, String mBean)
 			throws ReflectionException, InstanceNotFoundException,
 			IntrospectionException, MalformedObjectNameException,
 			NullPointerException {
 		final HashMap<String, ArrayList<ObjectName>> result = new HashMap<String, ArrayList<ObjectName>>();
 		ObjectName queryObjectName = null;
 		if (mbeanDomain != null && !mbeanDomain.isEmpty())
-			queryObjectName = new ObjectName(mbeanDomain + ":*");
+			queryObjectName = new ObjectName(mbeanDomain
+					+ (mBean != null ? ":" + mBean : ":*"));
 		final Set mbeans = mBeanServer.queryMBeans(queryObjectName, null);
 		final Iterator iter = mbeans.iterator();
 		while (iter.hasNext()) {
-			final ObjectInstance mbean = (ObjectInstance) iter.next();
-			final ObjectName objectName = mbean.getObjectName();
+			final ObjectInstance objectInstance = (ObjectInstance) iter.next();
+			final ObjectName objectName = objectInstance.getObjectName();
 			final String domain = objectName.getDomain();
 			//
 			if (result.containsKey(domain)) {
@@ -85,8 +91,10 @@ public class JmxPluginServlet extends HttpServlet {
 	}
 
 	private void renderJsonDomain(final PrintWriter pw, final String domain,
-			final ArrayList objectNames) throws InstanceNotFoundException,
-			IntrospectionException, ReflectionException, IOException {
+			final ArrayList objectNames, boolean renderDetails)
+			throws InstanceNotFoundException, IntrospectionException,
+			ReflectionException, IOException, AttributeNotFoundException,
+			MBeanException {
 		if (objectNames != null) {
 
 			pw.write("{");
@@ -101,7 +109,7 @@ public class JmxPluginServlet extends HttpServlet {
 				final ObjectName objectName = (ObjectName) iter.next();
 				final MBeanInfo mBeanInfo = mBeanServer
 						.getMBeanInfo(objectName);
-				renderJsonDomain(pw, objectName, mBeanInfo);
+				renderJsonDomain(pw, objectName, mBeanInfo, renderDetails);
 			}
 
 			pw.write("]}");
@@ -118,8 +126,9 @@ public class JmxPluginServlet extends HttpServlet {
 	}
 
 	private void renderJsonDomain(final PrintWriter pw,
-			final ObjectName objectName, final MBeanInfo mBeanInfo)
-			throws IOException {
+			final ObjectName objectName, final MBeanInfo mBeanInfo,
+			boolean renderDetails) throws IOException,
+			AttributeNotFoundException, InstanceNotFoundException {
 		pw.write("{");
 		jsonKey(pw, "mbean");
 		// using toString to make shure that type is set before any other
@@ -128,36 +137,63 @@ public class JmxPluginServlet extends HttpServlet {
 		String[] split = canonicalName.split(":");
 		jsonValue(pw, split[1]);
 
-		pw.write(',');
-		jsonKey(pw, "attributes");
-		pw.write("[");
+		if (renderDetails) {
+			pw.write(',');
+			jsonKey(pw, "attributes");
+			pw.write("[{");
 
-		final MBeanAttributeInfo[] attrs = mBeanInfo.getAttributes();
-		for (int i = 0; i < attrs.length; i++) {
-			final MBeanAttributeInfo attr = attrs[i];
-			if (!attr.isReadable())
-				continue; // skip non readable properties
-			jsonValue(pw, attr.getName() + ":writable=" + attr.isWritable());
-			if (i < attrs.length) {
-				pw.write(',');
+			final MBeanAttributeInfo[] attrs = mBeanInfo.getAttributes();
+			for (int i = 0; i < attrs.length; i++) {
+				final MBeanAttributeInfo attr = attrs[i];
+				if (!attr.isReadable())
+					continue; // skip non readable properties
+				// jsonValue(pw, attr.getName() + ":writable=" +
+				// attr.isWritable());
+				jsonKey(pw, attr.getName());
+				pw.write("[");
+				jsonValue(pw, "name="+attr.getName());
+				pw.write(",");
+				jsonValue(pw, "writable=" + attr.isWritable());
+				Object value = null;
+				try {
+					// Descriptor descriptor = attr.getDescriptor();
+					// descriptor.get
+					value = (mBeanServer.getAttribute(objectName,
+							attr.getName()));
+				} catch (ReflectionException e) {
+					// Munch skip this attribute then
+				} catch (MBeanException e) {
+					// Munch skip this attribute then
+				} catch (RuntimeMBeanException e) {
+					// Munch skip this attribute then
+				}
+				if (value != null) {
+					pw.write(",");
+					jsonValue(pw, "value=" + value.toString());
+				}
+				pw.write("]");
+				if (i < attrs.length) {
+					pw.write(',');
+				}
 			}
-		}
-		pw.write("]");
-		pw.write(',');
-		jsonKey(pw, "operations");
-		pw.write("[");
-		final MBeanOperationInfo[] ops = mBeanInfo.getOperations();
-		for (int i = 0; i < ops.length; i++) {
-			final MBeanOperationInfo op = ops[i];
-			// jsonValue(pw, op.getDescription() + ": " + op.getName() + " - "
-			// + op.getReturnType());
-			jsonValue(pw, op.getName());
-			if (i < ops.length) {
-				pw.write(',');
-			}
+			pw.write("}]");
+			pw.write(',');
+			jsonKey(pw, "operations");
+			pw.write("[");
+			final MBeanOperationInfo[] ops = mBeanInfo.getOperations();
+			for (int i = 0; i < ops.length; i++) {
+				final MBeanOperationInfo op = ops[i];
+				// jsonValue(pw, op.getDescription() + ": " + op.getName() +
+				// " - "
+				// + op.getReturnType());
+				jsonValue(pw, op.getName());
+				if (i < ops.length) {
+					pw.write(',');
+				}
 
+			}
+			pw.write("]");
 		}
-		pw.write("]");
 		pw.write("},");
 	}
 
@@ -208,11 +244,11 @@ public class JmxPluginServlet extends HttpServlet {
 		resp.setContentType("application/json");
 		resp.setCharacterEncoding("utf-8");
 
-		renderJSON(resp.getWriter(), null);
+		renderJSON(resp.getWriter(), null, null);
 	}
 
-	private void renderJSON(final PrintWriter pw, String mbeanDomain)
-			throws IOException {
+	private void renderJSON(final PrintWriter pw, String mbeanDomain,
+			String mbean) throws IOException {
 		if (mBeanServer == null) {
 			mBeanServer = ManagementFactory.getPlatformMBeanServer();
 		}
@@ -222,7 +258,7 @@ public class JmxPluginServlet extends HttpServlet {
 		if (mBeanServer != null) {
 			try {
 				final HashMap<String, ArrayList<ObjectName>> domains = getDomains(
-						mBeanServer, mbeanDomain);
+						mBeanServer, mbeanDomain, mbean);
 				final Set<String> keyset = new TreeSet<String>(domains.keySet());
 				statusLine.append(keyset.size());
 				statusLine.append(" Domain");
@@ -247,7 +283,7 @@ public class JmxPluginServlet extends HttpServlet {
 
 					Collections.sort(objectNames);
 
-					renderJsonDomain(pw, domain, objectNames);
+					renderJsonDomain(pw, domain, objectNames, mbean != null);
 
 					if (iter.hasNext())
 						pw.write(',');
@@ -288,8 +324,9 @@ public class JmxPluginServlet extends HttpServlet {
 
 			if (mbeanDomain == null
 					|| (mbeanDomain != null && parameterMap.isEmpty())) {
-				this.renderJSON(pw, mbeanDomain); // just loaded initialy or
-													// when using the filter
+				this.renderJSON(pw, mbeanDomain, null); // just loaded initialy
+														// or
+				// when using the filter
 			} else {
 				// parameter map is set, use it.
 				// first check if it is a attribute or operation
@@ -298,6 +335,9 @@ public class JmxPluginServlet extends HttpServlet {
 					this.renderAttribute(pw, mbeanDomain, parameterMap);
 				} else if (parameterMap.containsKey("operation")) {
 					// Handle operation
+				} else if (parameterMap.containsKey("mbean")) {
+					this.renderJSON(pw, mbeanDomain,
+							((String[]) parameterMap.get("mbean"))[0]);
 				} else {
 					// what is this? shouldn't happen.
 					return;
@@ -314,27 +354,29 @@ public class JmxPluginServlet extends HttpServlet {
 	private void renderAttribute(PrintWriter pw, String mbeanDomain,
 			Map parameterMap) {
 		try {
-			
+
 			String[] mbeans = (String[]) parameterMap.get("mbean");
-			
+
 			String[] attribute = (String[]) parameterMap.get("attribute");
-			
-			HashMap<String, ArrayList<ObjectName>> domains = getDomains(mBeanServer, mbeanDomain);
+
+			HashMap<String, ArrayList<ObjectName>> domains = getDomains(
+					mBeanServer, mbeanDomain, mbeans[0]);
 			Collection<ArrayList<ObjectName>> values = domains.values();
 			boolean found = false;
-			
+
 			pw.write("{");
-			
+
 			jsonKey(pw, "attributeName");
 			jsonValue(pw, attribute[0]);
-			
+
 			pw.write(",");
-			
+
 			for (ArrayList<ObjectName> arrayList : values) {
 				for (ObjectName objectName : arrayList) {
 					if (objectName.getCanonicalName().contains(mbeans[0])) {
-						//TODO: getAttribute values!
-						Object attributeValue = mBeanServer.getAttribute(objectName, attribute[0]);
+						// TODO: getAttribute values!
+						Object attributeValue = mBeanServer.getAttribute(
+								objectName, attribute[0]);
 						found = true;
 						jsonKey(pw, "attributeValue");
 						jsonValue(pw, attributeValue.toString());
@@ -344,7 +386,7 @@ public class JmxPluginServlet extends HttpServlet {
 				if (found)
 					break;
 			}
-			
+
 			pw.write("}");
 		} catch (Exception e) {
 			e.printStackTrace();

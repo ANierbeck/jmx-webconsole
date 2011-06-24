@@ -93,18 +93,21 @@ function drawMBeans(eventData) {
 		// now build the tree structure with attributes and operations
 		$.each( subStructure, function(name, value){
 			var beans = name.split("=");
-			mbeansList += "<li><span class='"+beans[0]+"'><strong>"+beans[1]+"</strong></span><ul>";
+			if (value[count] != undefined)
+				mbeansList += "<li><span class='"+beans[0]+"'><strong>"+beans[1]+"</strong></span><ul>";
+			else
+				mbeansList += "<li><span class='"+beans[0]+"'><strong><a type='attribute' href='javascript:showMbeanDetail(\""+eventData.data[eventData.selected].domain+"\",\""+mbeans[0].mbean+"\");'>"+beans[1]+"</a></strong></span><ul>";
 			$.each( value, function(index, val){
 				eventData.data[eventData.selected].count = count;
 				if (val != undefined ) {
 					var valBeans = val.split("=");
-					mbeansList += "<li><span class='"+valBeans[0]+"'><strong>"+valBeans[1]+"</strong></span><ul>";
-					mbeansList += drawAttributes(eventData);
-				 	mbeansList += drawOperations(eventData);
+					mbeansList += "<li><span class='"+valBeans[0]+"'><strong><a type='attribute' href='javascript:showMbeanDetail(\""+eventData.data[eventData.selected].domain+"\",\""+mbeans[count].mbean+"\");'>"+valBeans[1]+"</a></strong></span><ul>";
+//					mbeansList += drawAttributes(eventData);
+//				 	mbeansList += drawOperations(eventData);
 				 	mbeansList += "</ul></li>";
-				} else {
-					mbeansList += drawAttributes(eventData);
-					mbeansList += drawOperations(eventData);
+//				} else {
+//					mbeansList += drawAttributes(eventData);
+//					mbeansList += drawOperations(eventData);
 				}
 				count++;
 			});
@@ -118,6 +121,8 @@ function drawMBeans(eventData) {
 
 function drawAttributes(eventData) {
 	
+	var mbeanAttributesBody =  $('#mbeanAttributesBody')
+	
 	var mbeanCount = eventData.data[eventData.selected].count;
 	var attributes = eventData.data[eventData.selected].mbeans[mbeanCount].attributes;
 	
@@ -127,16 +132,27 @@ function drawAttributes(eventData) {
 	var attributeList = "";
 	
 	if (attributes.length > 0) {
-		attributeList = "<li><span class='attribute'><strong>Attributes</strong></span><ul>";
+//		attributeList = "<li><span class='attribute'><strong>Attributes</strong></span><ul>";
+		
+		attRow = "<tr>";
+		
 		for ( var idx in attributes ) {
-			var attributeProps = attributes[idx].split(":");
-			var isWritable = String(attributeProps[1].split("=")[1]);
+			var attr = attributes[idx];
+			attRow += "<td>"+String(attr[0].split("=")[0])+"</td>";
+			var isWritable = String(attr[1].split("=")[1]);
+			var value = attr[2]; 
 			if ("true"==isWritable)
-				attributeList += "<li><span class='file'><a type='attribute' href='javascript:showAttributeDetail(\""+domain+"\",\""+mbean+"\",\""+attributeProps[0]+"\");'>"+attributeProps[0]+"</a></span></li>";
+//				attributeList += "<li><span class='file'><a type='attribute' href='javascript:showAttributeDetail(\""+domain+"\",\""+mbean+"\",\""+attributeProps[0]+"\");'>"+attributeProps[0]+"</a></span></li>";
+				attRow += "<td><input type=\"text\">"+value+"</input></td>";
 			else
-				attributeList += "<li><span class='file-readonly'><a type='attribute' href='javascript:showAttributeDetail(\""+domain+"\",\""+mbean+"\",\""+attributeProps[0]+"\");'>"+attributeProps[0]+"</a></span></li>";
+//				attributeList += "<li><span class='file-readonly'><a type='attribute' href='javascript:showAttributeDetail(\""+domain+"\",\""+mbean+"\",\""+attributeProps[0]+"\");'>"+attributeProps[0]+"</a></span></li>";
+				attRow += "<td>"+value+"</td>";
 		}
-		attributeList += "</ul></li>";
+//		attributeList += "</ul></li>";
+		
+		attRow = "</tr>";
+		
+		attRow.appendTo(mbeanAttributesBody);
 	}
 	
 	return attributeList;
@@ -170,6 +186,17 @@ function showAttributeDetail(domain, mbean, attribute) {
 	$.get(pluginRoot+"/"+domain+".json?mbean="+mbean+"&attribute="+attribute, null, renderAttributeDetail, "json"); 
 }
 
+function showMbeanDetail(domain, mbean) {
+	$.get(pluginRoot+"/"+domain+".json?mbean="+mbean, null, renderMbeanDetail, "json"); 
+}
+
+function renderMbeanDetail(mbeanDetail) {
+	mbeanDetail.selected=0;
+	mbeanDetail.data[0].count=0;
+	drawAttributes(mbeanDetail);
+	drawOperations(mbeanDetail);
+}
+
 function renderAttributeDetail(attributeDetail) {
 	var detail = $('#detail');
 	
@@ -180,7 +207,8 @@ function renderAttributeDetail(attributeDetail) {
 
 $(document).ready(function(){
 	$('#reload').click(function() {
-		$.get(pluginRoot + '/.json', null, renderData, 'json');
+		//$.get(pluginRoot + '/.json', null, renderData, 'json');
+		loadData();
 	}).click();
 	
 	
