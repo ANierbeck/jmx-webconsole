@@ -98,29 +98,30 @@ function drawMBeans(eventData) {
 							var beans = name.split("=");
 							if (value[count] != undefined)
 								mbeansList += "<li><span class='" + beans[0]
-										+ "'><strong>" + beans[1]
-										+ "</strong></span><ul>";
+										+ "'>" + beans[1]
+										+ "</span><ul>";
 							else
-								mbeansList += "<li><span class='"
-										+ beans[0]
-										+ "'><strong><a type='attribute' href='javascript:showMbeanDetail(\""
+								mbeansList += "<li><a type='attribute' href='javascript:showMbeanDetail(\""
 										+ eventData.data[eventData.selected].domain
-										+ "\",\"" + mbeans[0].mbean + "\");'>"
-										+ beans[1] + "</a></strong></span><ul>";
+										+ "\",\"" + mbeans[0].mbean + "\");'><span class='"
+										+ beans[0]
+										+ "'>"
+										+ beans[1] + "</a></span><ul>";
 							$.each(value,function(index, val) {
 												eventData.data[eventData.selected].count = count;
 												if (val != undefined) {
 													var valBeans = val
 															.split("=");
-													mbeansList += "<li><span class='"
-															+ valBeans[0]
-															+ "'><strong><a type='attribute' href='javascript:showMbeanDetail(\""
+													mbeansList += "<li><a type='attribute' href='javascript:showMbeanDetail(\""
 															+ eventData.data[eventData.selected].domain
 															+ "\",\""
 															+ mbeans[count].mbean
 															+ "\");'>"
+															+ "<span class='"
+															+ valBeans[0]
+															+ "'>"
 															+ valBeans[1]
-															+ "</a></strong></span><ul>";
+															+ "</span></a><ul>";
 													mbeansList += "</ul></li>";
 												}
 												count++;
@@ -179,7 +180,7 @@ function drawOperations(eventData) {
 	var operationsList = "";
 
 	if (operations.length > 0) {
-		operationsList = "<li><span class='operations'><strong>Operations</strong></span><ul>";
+		operationsList = "<li><span class='operations'>Operations</span><ul>";
 		for ( var idx in operations) {
 			operationsList += "<li><span class='operation'><a type='attribute' href='javascript:showOperationDetail(\""
 					+ domain
