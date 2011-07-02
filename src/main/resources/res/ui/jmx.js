@@ -155,8 +155,8 @@ function drawAttributes(eventData) {
 				var isWritable = String(value[0].split("=")[1]);
 				var value = String(value[1].split("=")[1]);
 				if ("true" == isWritable)
-					attRow += "<td><input type=\"text\">" + value
-							+ "</input></td>";
+					attRow += "<td><input type=\"text\" value=\"" + value
+							+ "\"></input></td>";
 				else
 					attRow += "<td>" + value + "</td>";
 				attRow += "</tr>";

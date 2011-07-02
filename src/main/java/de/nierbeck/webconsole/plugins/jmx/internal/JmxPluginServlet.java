@@ -7,6 +7,7 @@ import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -167,7 +168,11 @@ public class JmxPluginServlet extends HttpServlet {
 				}
 				if (value != null) {
 					pw.write(",");
-					jsonValue(pw, "value=" + value.toString());
+					if (!value.getClass().isArray()) {
+						jsonValue(pw, "value=" + value.toString());
+					} else {
+						jsonValue(pw, "value=" + Arrays.toString((Object[])value));
+					}
 				}
 				pw.write("]");
 				if (i < attrs.length) {
