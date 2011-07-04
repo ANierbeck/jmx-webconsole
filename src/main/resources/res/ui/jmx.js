@@ -93,21 +93,26 @@ function drawMBeans(eventData) {
 		var count = 0;
 
 		// now build the tree structure with attributes and operations
-		$.each(subStructure,
+		$
+				.each(
+						subStructure,
 						function(name, value) {
 							var beans = name.split("=");
 							if (value[count] != undefined)
 								mbeansList += "<li><span class='" + beans[0]
-										+ "'>" + beans[1]
-										+ "</span><ul>";
+										+ "'>" + beans[1] + "</span><ul>";
 							else
 								mbeansList += "<li><a type='attribute' href='javascript:showMbeanDetail(\""
 										+ eventData.data[eventData.selected].domain
-										+ "\",\"" + mbeans[0].mbean + "\");'><span class='"
+										+ "\",\""
+										+ mbeans[0].mbean
+										+ "\");'><span class='"
 										+ beans[0]
-										+ "'>"
-										+ beans[1] + "</a></span><ul>";
-							$.each(value,function(index, val) {
+										+ "'>" + beans[1] + "</span></a><ul>";
+							$
+									.each(
+											value,
+											function(index, val) {
 												eventData.data[eventData.selected].count = count;
 												if (val != undefined) {
 													var valBeans = val
@@ -121,8 +126,8 @@ function drawMBeans(eventData) {
 															+ valBeans[0]
 															+ "'>"
 															+ valBeans[1]
-															+ "</span></a><ul>";
-													mbeansList += "</ul></li>";
+															+ "</span></a>";
+													mbeansList += "</li>";
 												}
 												count++;
 											});
@@ -136,7 +141,7 @@ function drawMBeans(eventData) {
 function drawAttributes(eventData) {
 
 	var mbeanAttributesBody = $('#mbeanAttributesBody')
-	
+
 	var mbeanCount = eventData.data[eventData.selected].count;
 	var attributes = eventData.data[eventData.selected].mbeans[mbeanCount].attributes;
 
@@ -210,10 +215,10 @@ function showMbeanDetail(domain, mbean) {
 }
 
 function renderMbeanDetail(mbeanDetail) {
-	
+
 	var mbeanAttributesBody = $('#mbeanAttributesBody')
 	mbeanAttributesBody.children().remove();
-	
+
 	mbeanDetail.selected = 0;
 	mbeanDetail.data[0].count = 0;
 	drawAttributes(mbeanDetail);

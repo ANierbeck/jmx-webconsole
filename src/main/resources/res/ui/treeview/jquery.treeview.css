@@ -70,23 +70,23 @@
 .filetree li { padding: 3px 0 2px 16px; }
 .filetree span.folder, .filetree span.file { padding: 1px 0 1px 16px; display: block; }
 .filetree span.folder, .filetree span.file-readonly { padding: 1px 0 1px 16px; display: block; }
-.filetree span.folder, .filetree span.operation { padding: 1px 0 1px 16px; display: block; }
-.filetree span.folder, .filetree span.operations { padding: 1px 0 1px 16px; display: block; }
+/* .filetree span.folder, .filetree span.operation { padding: 1px 0 1px 16px; display: block; } */
+/* .filetree span.folder, .filetree span.operations { padding: 1px 0 1px 16px; display: block; } */
 .filetree span.folder, .filetree span.service { padding: 1px 0 1px 16px; display: block; }
 .filetree span.folder, .filetree span.type { padding: 1px 0 1px 16px; display: block; }
-.filetree span.folder, .filetree span.attribute { padding: 1px 0 1px 16px; display: block; }
+/* .filetree span.folder, .filetree span.attribute { padding: 1px 0 1px 16px; display: block; } */
 .filetree span.folder, .filetree span.version { padding: 1px 0 1px 16px; display: block; }
 .filetree span.folder, .filetree span.name { padding: 1px 0 1px 16px; display: block; }
 .filetree span.folder { background: url(images/folder.gif) 0 0 no-repeat; }
 .filetree span.type { background: url(images/type_get.gif) 0 0 no-repeat; }
 .filetree li.expandable span.folder { background: url(images/folder-closed.gif) 0 0 no-repeat; }
-.filetree li.expandable span.operations { background: url(images/operations-closed.gif) 0 0 no-repeat; }
+/* .filetree li.expandable span.operations { background: url(images/operations-closed.gif) 0 0 no-repeat; } */
 .filetree li.expandable span.type { background: url(images/type.gif) 0 0 no-repeat; }
 .filetree span.file { background: url(images/file.gif) 0 0 no-repeat; }
 .filetree span.file-readonly { background: url(images/file-readonly.gif) 0 0 no-repeat; }
-.filetree span.operation { background: url(images/operation.gif) 0 0 no-repeat; }
+/* .filetree span.operation { background: url(images/operation.gif) 0 0 no-repeat; } */
 .filetree span.service { background: url(images/service.gif) 0 0 no-repeat; }
-.filetree span.attribute { background: url(images/attribute.gif) 0 0 no-repeat; }
-.filetree span.operations { background: url(images/operations.gif) 0 0 no-repeat; }
+/* .filetree span.attribute { background: url(images/attribute.gif) 0 0 no-repeat; } */
+/* .filetree span.operations { background: url(images/operations.gif) 0 0 no-repeat; } */
 .filetree span.version { background: url(images/version.gif) 0 0 no-repeat; }
 .filetree span.name { background: url(images/name.gif) 0 0 no-repeat; }
