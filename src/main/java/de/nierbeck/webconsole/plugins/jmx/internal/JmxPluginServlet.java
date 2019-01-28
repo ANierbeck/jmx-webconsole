@@ -1,40 +1,17 @@
 package de.nierbeck.webconsole.plugins.jmx.internal;
 
+import javax.management.*;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.lang.management.ManagementFactory;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-
-import javax.management.AttributeNotFoundException;
-import javax.management.Descriptor;
-import javax.management.InstanceNotFoundException;
-import javax.management.IntrospectionException;
-import javax.management.MBeanAttributeInfo;
-import javax.management.MBeanException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanOperationInfo;
-import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
-import javax.management.ObjectInstance;
-import javax.management.ObjectName;
-import javax.management.ReflectionException;
-import javax.management.RuntimeMBeanException;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.util.*;
 
 public class JmxPluginServlet extends HttpServlet {
 	/**
@@ -111,6 +88,9 @@ public class JmxPluginServlet extends HttpServlet {
 				final MBeanInfo mBeanInfo = mBeanServer
 						.getMBeanInfo(objectName);
 				renderJsonDomain(pw, objectName, mBeanInfo, renderDetails);
+				if(iter.hasNext()){
+					pw.write(",");
+				}
 			}
 
 			pw.write("]}");
@@ -197,7 +177,7 @@ public class JmxPluginServlet extends HttpServlet {
 			}
 			pw.write("]");
 		}
-		pw.write("},");
+		pw.write("}");
 	}
 
 	private final String readTemplateFile(final Class clazz,
