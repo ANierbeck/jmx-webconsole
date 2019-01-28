@@ -1,5 +1,7 @@
 package de.nierbeck.webconsole.plugins.jmx.internal;
 
+import com.google.gson.stream.JsonWriter;
+
 import javax.management.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -13,445 +15,344 @@ import java.lang.management.ManagementFactory;
 import java.net.URL;
 import java.util.*;
 
-public class JmxPluginServlet extends HttpServlet {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
+public class JmxPluginServlet extends HttpServlet{
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
 
-	private transient MBeanServer mBeanServer;
+    private transient MBeanServer mBeanServer;
 
-	private final String TEMPLATE;
-	private static final String ACTION_CLEAR = "clear";
+    private final String TEMPLATE;
+    private static final String ACTION_CLEAR = "clear";
 
-	private static final String PARAMETER_ACTION = "action";
+    private static final String PARAMETER_ACTION = "action";
 
-	public JmxPluginServlet() {
-		TEMPLATE = readTemplateFile(getClass(), "/res/jmx-template.html");
-	}
+    public JmxPluginServlet(){
+        TEMPLATE = readTemplateFile(getClass(), "/res/jmx-template.html");
+    }
 
-	public String getLabel() {
-		return JmxPluginConstants.LABEL;
-	}
+    public String getLabel(){
+        return JmxPluginConstants.LABEL;
+    }
 
-	public String getTitle() {
-		return JmxPluginConstants.NAME;
-	}
+    public String getTitle(){
+        return JmxPluginConstants.NAME;
+    }
 
-	public HashMap<String, ArrayList<ObjectName>> getDomains(
-			final MBeanServer mBeanServer, String mbeanDomain, String mBean)
-			throws ReflectionException, InstanceNotFoundException,
-			IntrospectionException, MalformedObjectNameException,
-			NullPointerException {
-		final HashMap<String, ArrayList<ObjectName>> result = new HashMap<String, ArrayList<ObjectName>>();
-		ObjectName queryObjectName = null;
-		if (mbeanDomain != null && !mbeanDomain.isEmpty())
-			queryObjectName = new ObjectName(mbeanDomain
-					+ (mBean != null ? ":" + mBean : ":*"));
-		final Set mbeans = mBeanServer.queryMBeans(queryObjectName, null);
-		final Iterator iter = mbeans.iterator();
-		while (iter.hasNext()) {
-			final ObjectInstance objectInstance = (ObjectInstance) iter.next();
-			final ObjectName objectName = objectInstance.getObjectName();
-			final String domain = objectName.getDomain();
-			//
-			if (result.containsKey(domain)) {
-				final ArrayList<ObjectName> list = result.get(domain);
-				list.add(objectName);
-				result.put(domain, list);
-			} else {
-				final ArrayList<ObjectName> list = new ArrayList<ObjectName>();
-				list.add(objectName);
-				result.put(domain, list);
-			}
-		}
-		return result;
-	}
+    public HashMap<String, ArrayList<ObjectName>> getDomains(
+            final MBeanServer mBeanServer, String mbeanDomain, String mBean)
+            throws MalformedObjectNameException,
+            NullPointerException{
+        final HashMap<String, ArrayList<ObjectName>> result = new HashMap<String, ArrayList<ObjectName>>();
+        ObjectName queryObjectName = null;
+        if(mbeanDomain != null && !mbeanDomain.isEmpty())
+            queryObjectName = new ObjectName(mbeanDomain
+                    + (mBean != null ? ":" + mBean : ":*"));
+        final Set mbeans = mBeanServer.queryMBeans(queryObjectName, null);
+        final Iterator iter = mbeans.iterator();
+        while(iter.hasNext()){
+            final ObjectInstance objectInstance = (ObjectInstance) iter.next();
+            final ObjectName objectName = objectInstance.getObjectName();
+            final String domain = objectName.getDomain();
+            //
+            if(result.containsKey(domain)){
+                final ArrayList<ObjectName> list = result.get(domain);
+                list.add(objectName);
+                result.put(domain, list);
+            } else{
+                final ArrayList<ObjectName> list = new ArrayList<ObjectName>();
+                list.add(objectName);
+                result.put(domain, list);
+            }
+        }
+        return result;
+    }
 
-	private void renderJsonDomain(final PrintWriter pw, final String domain,
-			final ArrayList objectNames, boolean renderDetails)
-			throws InstanceNotFoundException, IntrospectionException,
-			ReflectionException, IOException, AttributeNotFoundException,
-			MBeanException {
-		if (objectNames != null) {
+    private void renderJsonDomain(final JsonWriter pw, final String domain,
+                                  final ArrayList objectNames, boolean renderDetails)
+            throws InstanceNotFoundException, IntrospectionException,
+            ReflectionException, IOException, AttributeNotFoundException{
+        if(objectNames != null){
 
-			pw.write("{");
-			jsonKey(pw, "domain");
-			jsonValue(pw, domain);
-			pw.write(',');
-			jsonKey(pw, "mbeans");
-			pw.write("[");
+            pw.beginObject();
+            pw.name("domain").value(domain);
 
-			final Iterator iter = objectNames.iterator();
-			while (iter.hasNext()) {
-				final ObjectName objectName = (ObjectName) iter.next();
-				final MBeanInfo mBeanInfo = mBeanServer
-						.getMBeanInfo(objectName);
-				renderJsonDomain(pw, objectName, mBeanInfo, renderDetails);
-				if(iter.hasNext()){
-					pw.write(",");
-				}
-			}
+            pw.name("mbeans").beginArray();
+            final Iterator iter = objectNames.iterator();
+            while(iter.hasNext()){
+                final ObjectName objectName = (ObjectName) iter.next();
+                final MBeanInfo mBeanInfo = mBeanServer
+                        .getMBeanInfo(objectName);
+                renderJsonDomain(pw, objectName, mBeanInfo, renderDetails);
+            }
+            pw.endArray();
+            pw.endObject();
+        }
+    }
 
-			pw.write("]}");
-		}
-	}
+    private String getPath(final ObjectName name){
+        return name.getDomain();
+    }
 
-	private String getPath(final ObjectName name) {
-		return name.getDomain();
-	}
+    private String getName(final ObjectName name){
+        final String result = "";
+        return result;
+    }
 
-	private String getName(final ObjectName name) {
-		final String result = "";
-		return result;
-	}
+    private void renderJsonDomain(final JsonWriter pw,
+                                  final ObjectName objectName, final MBeanInfo mBeanInfo,
+                                  boolean renderDetails) throws IOException,
+            AttributeNotFoundException, InstanceNotFoundException{
+        pw.beginObject();
+        // using toString to make shure that type is set before any other
+        // property
+        String canonicalName = objectName.toString();
+        String[] split = canonicalName.split(":");
+        pw.name("mbean").value(split[1]);
+        if(renderDetails){
+            pw.name("attributes").beginArray();
 
-	private void renderJsonDomain(final PrintWriter pw,
-			final ObjectName objectName, final MBeanInfo mBeanInfo,
-			boolean renderDetails) throws IOException,
-			AttributeNotFoundException, InstanceNotFoundException {
-		pw.write("{");
-		jsonKey(pw, "mbean");
-		// using toString to make shure that type is set before any other
-		// property
-		String canonicalName = objectName.toString();
-		String[] split = canonicalName.split(":");
-		jsonValue(pw, split[1]);
+            final MBeanAttributeInfo[] attrs = mBeanInfo.getAttributes();
+            for(int i = 0; i < attrs.length; i++){
+                final MBeanAttributeInfo attr = attrs[i];
+                if(!attr.isReadable())
+                    continue; // skip non readable properties
+                // jsonValue(pw, attr.getName() + ":writable=" +
+                // attr.isWritable());
+                pw.beginObject();
+                pw.name(attr.getName()).beginArray();
+                pw.value("writable=" + attr.isWritable());
+                Object value = null;
+                try{
+                    // Descriptor descriptor = attr.getDescriptor();
+                    // descriptor.get
+                    value = (mBeanServer.getAttribute(objectName,
+                            attr.getName()));
+                } catch(ReflectionException e){
+                    // Munch skip this attribute then
+                } catch(MBeanException e){
+                    // Munch skip this attribute then
+                } catch(RuntimeMBeanException e){
+                    // Munch skip this attribute then
+                }
+                if(value != null){
+                    if(!value.getClass().isArray()){
+                        pw.value("value=" + value.toString());
+                    } else{
+                        pw.value("value=" + Arrays.toString((Object[]) value));
+                    }
+                }
+                pw.endArray();
+                pw.endObject();
+            }
+            pw.endArray();
 
-		if (renderDetails) {
-			pw.write(',');
-			jsonKey(pw, "attributes");
-			pw.write("[{");
+            pw.name("operations").beginArray();
 
-			final MBeanAttributeInfo[] attrs = mBeanInfo.getAttributes();
-			for (int i = 0; i < attrs.length; i++) {
-				final MBeanAttributeInfo attr = attrs[i];
-				if (!attr.isReadable())
-					continue; // skip non readable properties
-				// jsonValue(pw, attr.getName() + ":writable=" +
-				// attr.isWritable());
-				jsonKey(pw, attr.getName());
-				pw.write("[");
-				jsonValue(pw, "writable=" + attr.isWritable());
-				Object value = null;
-				try {
-					// Descriptor descriptor = attr.getDescriptor();
-					// descriptor.get
-					value = (mBeanServer.getAttribute(objectName,
-							attr.getName()));
-				} catch (ReflectionException e) {
-					// Munch skip this attribute then
-				} catch (MBeanException e) {
-					// Munch skip this attribute then
-				} catch (RuntimeMBeanException e) {
-					// Munch skip this attribute then
-				}
-				if (value != null) {
-					pw.write(",");
-					if (!value.getClass().isArray()) {
-						jsonValue(pw, "value=" + value.toString());
-					} else {
-						jsonValue(pw, "value=" + Arrays.toString((Object[])value));
-					}
-				}
-				pw.write("]");
-				if (i < attrs.length) {
-					pw.write(',');
-				}
-			}
-			pw.write("}]");
-			pw.write(',');
-			jsonKey(pw, "operations");
-			pw.write("[");
-			final MBeanOperationInfo[] ops = mBeanInfo.getOperations();
-			for (int i = 0; i < ops.length; i++) {
-				final MBeanOperationInfo op = ops[i];
-				// jsonValue(pw, op.getDescription() + ": " + op.getName() +
-				// " - "
-				// + op.getReturnType());
-				jsonValue(pw, op.getName());
-				if (i < ops.length) {
-					pw.write(',');
-				}
+            final MBeanOperationInfo[] ops = mBeanInfo.getOperations();
+            for(int i = 0; i < ops.length; i++){
+                final MBeanOperationInfo op = ops[i];
+                // jsonValue(pw, op.getDescription() + ": " + op.getName() +
+                // " - "
+                // + op.getReturnType());
+                pw.value(op.getName());
+            }
+            pw.endArray();
+        }
+        pw.endObject();
+    }
 
-			}
-			pw.write("]");
-		}
-		pw.write("}");
-	}
+    private final String readTemplateFile(final Class clazz,
+                                          final String templateFile){
+        InputStream templateStream = getClass().getResourceAsStream(
+                templateFile);
+        if(templateStream != null){
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] data = new byte[1024];
+            try{
+                int len = 0;
+                while((len = templateStream.read(data)) > 0){
+                    baos.write(data, 0, len);
+                }
+                return baos.toString("UTF-8");
+            } catch(IOException e){
+                // don't use new Exception(message, cause) because cause is 1.4+
+                throw new RuntimeException("readTemplateFile: Error loading "
+                        + templateFile + ": " + e);
+            } finally{
+                try{
+                    templateStream.close();
+                } catch(IOException e){
+                    /* ignore */
+                }
 
-	private final String readTemplateFile(final Class clazz,
-			final String templateFile) {
-		InputStream templateStream = getClass().getResourceAsStream(
-				templateFile);
-		if (templateStream != null) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			byte[] data = new byte[1024];
-			try {
-				int len = 0;
-				while ((len = templateStream.read(data)) > 0) {
-					baos.write(data, 0, len);
-				}
-				return baos.toString("UTF-8");
-			} catch (IOException e) {
-				// don't use new Exception(message, cause) because cause is 1.4+
-				throw new RuntimeException("readTemplateFile: Error loading "
-						+ templateFile + ": " + e);
-			} finally {
-				try {
-					templateStream.close();
-				} catch (IOException e) {
-					/* ignore */
-				}
+            }
+        }
 
-			}
-		}
+        // template file does not exist, return an empty string
+        log("readTemplateFile: File '" + templateFile
+                + "' not found through class " + clazz);
+        return "";
+    }
 
-		// template file does not exist, return an empty string
-		log("readTemplateFile: File '" + templateFile
-				+ "' not found through class " + clazz);
-		return "";
-	}
+    /**
+     * @see javax.servlet.http.HttpServlet#doPost(javax.servlet.http.HttpServletRequest,
+     * javax.servlet.http.HttpServletResponse)
+     */
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException{
+        final String action = req.getParameter(PARAMETER_ACTION);
+        // for now we only have the clear action
+        if(ACTION_CLEAR.equals(action)){
+        }
+        // we always send back the json data
+        resp.setContentType("application/json");
+        resp.setCharacterEncoding("utf-8");
 
-	/**
-	 * @see javax.servlet.http.HttpServlet#doPost(javax.servlet.http.HttpServletRequest,
-	 *      javax.servlet.http.HttpServletResponse)
-	 */
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		final String action = req.getParameter(PARAMETER_ACTION);
-		// for now we only have the clear action
-		if (ACTION_CLEAR.equals(action)) {
-		}
-		// we always send back the json data
-		resp.setContentType("application/json");
-		resp.setCharacterEncoding("utf-8");
+        renderJSON(resp.getWriter(), null, null);
+    }
 
-		renderJSON(resp.getWriter(), null, null);
-	}
+    private void renderJSON(final PrintWriter pw, String mbeanDomain,
+                            String mbean) throws IOException{
+        if(mBeanServer == null){
+            mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        }
+        JsonWriter writer = new JsonWriter(pw);
+        writer.beginObject();
 
-	private void renderJSON(final PrintWriter pw, String mbeanDomain,
-			String mbean) throws IOException {
-		if (mBeanServer == null) {
-			mBeanServer = ManagementFactory.getPlatformMBeanServer();
-		}
-		StringBuffer statusLine = new StringBuffer();
-		pw.write("{");
+        if(mBeanServer != null){
+            try{
+                final HashMap<String, ArrayList<ObjectName>> domains = getDomains(
+                        mBeanServer, mbeanDomain, mbean);
+                final Set<String> keyset = new TreeSet<String>(domains.keySet());
 
-		if (mBeanServer != null) {
-			try {
-				final HashMap<String, ArrayList<ObjectName>> domains = getDomains(
-						mBeanServer, mbeanDomain, mbean);
-				final Set<String> keyset = new TreeSet<String>(domains.keySet());
-				statusLine.append(keyset.size());
-				statusLine.append(" Domain");
-				if (keyset.size() > 1) {
-					statusLine.append('s');
-				}
-				statusLine.append(" received.");
+                writer.name("status").value(keyset.size() + "Domain received.");
+                writer.name("data").beginArray();
 
-				jsonKey(pw, "status");
-				jsonValue(pw, statusLine.toString());
+                final Iterator<String> iter = keyset.iterator();
+                while(iter.hasNext()){
+                    final String domain = (String) iter.next();
 
-				pw.write(',');
-				jsonKey(pw, "data");
+                    final ArrayList<ObjectName> objectNames = domains
+                            .get(domain);
 
-				pw.write('[');
-				final Iterator<String> iter = keyset.iterator();
-				while (iter.hasNext()) {
-					final String domain = (String) iter.next();
+                    Collections.sort(objectNames);
 
-					final ArrayList<ObjectName> objectNames = domains
-							.get(domain);
+                    renderJsonDomain(writer, domain, objectNames, mbean != null);
+                }
+                writer.endArray();
+                writer.endObject();
+            } catch(final Exception e){
+                e.printStackTrace();
+            }
+        }
 
-					Collections.sort(objectNames);
+    }
 
-					renderJsonDomain(pw, domain, objectNames, mbean != null);
+    protected void doGet(HttpServletRequest request,
+                         HttpServletResponse response) throws ServletException, IOException{
 
-					if (iter.hasNext())
-						pw.write(',');
+        String info = request.getPathInfo();
+        if(info.endsWith(".json")){
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
 
-				}
-				pw.write(']');
-			} catch (final Exception e) {
-				e.printStackTrace();
-			}
-		}
+            // remove .json
+            info = info.substring(0, info.length() - 5);
 
-		pw.write("}");
-	}
+            // remove label and starting slash
+            info = info.substring(getLabel().length() + 1);
+            // we only accept direct requests to a bundle if they have a slash
+            // after the label
+            String mbeanDomain = null;
+            if(info.startsWith("/")){
+                mbeanDomain = info.substring(1);
+            }
 
-	protected void doGet(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
+            PrintWriter pw = response.getWriter();
+            JsonWriter writer = new JsonWriter(pw);
 
-		String info = request.getPathInfo();
-		if (info.endsWith(".json")) {
-			response.setContentType("application/json");
-			response.setCharacterEncoding("UTF-8");
+            Map parameterMap = request.getParameterMap();
 
-			// remove .json
-			info = info.substring(0, info.length() - 5);
+            if(mbeanDomain == null
+                    || (mbeanDomain != null && parameterMap.isEmpty())){
+                this.renderJSON(pw, mbeanDomain, null); // just loaded initialy
+                // or
+                // when using the filter
+            } else{
+                // parameter map is set, use it.
+                // first check if it is a attribute or operation
+                if(parameterMap.containsKey("attribute")){
+                    // handle attribute calls
+                    this.renderAttribute(writer, mbeanDomain, parameterMap);
+                } else if(parameterMap.containsKey("operation")){
+                    // Handle operation
+                } else if(parameterMap.containsKey("mbean")){
+                    this.renderJSON(pw, mbeanDomain,
+                            ((String[]) parameterMap.get("mbean"))[0]);
+                } else{
+                    // what is this? shouldn't happen.
+                    return;
+                }
+            }
 
-			// remove label and starting slash
-			info = info.substring(getLabel().length() + 1);
-			// we only accept direct requests to a bundle if they have a slash
-			// after the label
-			String mbeanDomain = null;
-			if (info.startsWith("/")) {
-				mbeanDomain = info.substring(1);
-			}
+            // nothing more to do
+            return;
+        }
 
-			PrintWriter pw = response.getWriter();
+        this.renderContent(request, response);
+    }
 
-			Map parameterMap = request.getParameterMap();
+    private void renderAttribute(JsonWriter pw, String mbeanDomain,
+                                 Map parameterMap){
+        try{
 
-			if (mbeanDomain == null
-					|| (mbeanDomain != null && parameterMap.isEmpty())) {
-				this.renderJSON(pw, mbeanDomain, null); // just loaded initialy
-														// or
-				// when using the filter
-			} else {
-				// parameter map is set, use it.
-				// first check if it is a attribute or operation
-				if (parameterMap.containsKey("attribute")) {
-					// handle attribute calls
-					this.renderAttribute(pw, mbeanDomain, parameterMap);
-				} else if (parameterMap.containsKey("operation")) {
-					// Handle operation
-				} else if (parameterMap.containsKey("mbean")) {
-					this.renderJSON(pw, mbeanDomain,
-							((String[]) parameterMap.get("mbean"))[0]);
-				} else {
-					// what is this? shouldn't happen.
-					return;
-				}
-			}
+            String[] mbeans = (String[]) parameterMap.get("mbean");
 
-			// nothing more to do
-			return;
-		}
+            String[] attribute = (String[]) parameterMap.get("attribute");
 
-		this.renderContent(request, response);
-	}
+            HashMap<String, ArrayList<ObjectName>> domains = getDomains(
+                    mBeanServer, mbeanDomain, mbeans[0]);
+            Collection<ArrayList<ObjectName>> values = domains.values();
+            boolean found = false;
 
-	private void renderAttribute(PrintWriter pw, String mbeanDomain,
-			Map parameterMap) {
-		try {
+            pw.beginObject();
+            pw.name("attributeName");
+            pw.value(attribute[0]);
 
-			String[] mbeans = (String[]) parameterMap.get("mbean");
+            for(ArrayList<ObjectName> arrayList : values){
+                for(ObjectName objectName : arrayList){
+                    if(objectName.getCanonicalName().contains(mbeans[0])){
+                        // TODO: getAttribute values!
+                        Object attributeValue = mBeanServer.getAttribute(
+                                objectName, attribute[0]);
+                        found = true;
+                        pw.name("attributeValue");
+                        pw.value(attributeValue.toString());
+                        break;
+                    }
+                }
+                if(found)
+                    break;
+            }
 
-			String[] attribute = (String[]) parameterMap.get("attribute");
+            pw.endObject();
+        } catch(Exception e){
+            e.printStackTrace();
+        }
+    }
 
-			HashMap<String, ArrayList<ObjectName>> domains = getDomains(
-					mBeanServer, mbeanDomain, mbeans[0]);
-			Collection<ArrayList<ObjectName>> values = domains.values();
-			boolean found = false;
+    protected void renderContent(HttpServletRequest request,
+                                 HttpServletResponse response) throws ServletException, IOException{
+        final PrintWriter pw = response.getWriter();
+        pw.print(TEMPLATE);
+    }
 
-			pw.write("{");
-
-			jsonKey(pw, "attributeName");
-			jsonValue(pw, attribute[0]);
-
-			pw.write(",");
-
-			for (ArrayList<ObjectName> arrayList : values) {
-				for (ObjectName objectName : arrayList) {
-					if (objectName.getCanonicalName().contains(mbeans[0])) {
-						// TODO: getAttribute values!
-						Object attributeValue = mBeanServer.getAttribute(
-								objectName, attribute[0]);
-						found = true;
-						jsonKey(pw, "attributeValue");
-						jsonValue(pw, attributeValue.toString());
-						break;
-					}
-				}
-				if (found)
-					break;
-			}
-
-			pw.write("}");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	protected void renderContent(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
-		final PrintWriter pw = response.getWriter();
-		pw.print(TEMPLATE);
-	}
-
-	public URL getResource(String path) {
-		if (path.startsWith("/jmx/res/ui/")) {
-			return this.getClass().getResource(path.substring(4));
-		}
-		return null;
-	}
-
-	private void jsonValue(final PrintWriter pw, final String v) {
-		if (v == null || v.length() == 0) {
-			pw.write("\"\"");
-			return;
-		}
-
-		pw.write('"');
-		char previousChar = 0;
-		char c;
-
-		for (int i = 0; i < v.length(); i += 1) {
-			c = v.charAt(i);
-			switch (c) {
-			case '\\':
-			case '"':
-				pw.write('\\');
-				pw.write(c);
-				break;
-			case '/':
-				if (previousChar == '<') {
-					pw.write('\\');
-				}
-				pw.write(c);
-				break;
-			case '\b':
-				pw.write("\\b");
-				break;
-			case '\t':
-				pw.write("\\t");
-				break;
-			case '\n':
-				pw.write("\\n");
-				break;
-			case '\f':
-				pw.write("\\f");
-				break;
-			case '\r':
-				pw.write("\\r");
-				break;
-			default:
-				if (c < ' ') {
-					final String hexValue = "000" + Integer.toHexString(c);
-					pw.write("\\u");
-					pw.write(hexValue.substring(hexValue.length() - 4));
-				} else {
-					pw.write(c);
-				}
-			}
-			previousChar = c;
-		}
-		pw.write('"');
-	}
-
-	private void jsonValue(final PrintWriter pw, final long l) {
-		pw.write(Long.toString(l));
-	}
-
-	private void jsonValue(PrintWriter pw, boolean b) {
-		pw.write(Boolean.toString(b));
-	}
-
-	private void jsonKey(final PrintWriter pw, String key) {
-		jsonValue(pw, key);
-		pw.write(':');
-	}
+    public URL getResource(String path){
+        if(path.startsWith("/jmx/res/ui/")){
+            return this.getClass().getResource(path.substring(4));
+        }
+        return null;
+    }
 }
