@@ -185,6 +185,7 @@ function drawOperations(eventData) {
 	var operationsList = "";
 
 	if (operations.length > 0) {
+		$('#tabs-operations').html();
 		operationsList = "<li><span class='operations'>Operations</span><ul>";
 		for ( var idx in operations) {
 			operationsList += "<li><span class='operation'><a type='attribute' href='javascript:showOperationDetail(\""
@@ -193,10 +194,11 @@ function drawOperations(eventData) {
 					+ mbean
 					+ "\",\""
 					+ operations[idx]
-					+ "\"'>" + operations[idx] + "</a></span></li>";
+					+ "\")'>" + operations[idx] + "</a></span></li>";
 		}
 		operationsList += "</ul></li>";
 	}
+	$('#tabs-operations').append(operationsList);
 	return operationsList;
 }
 
